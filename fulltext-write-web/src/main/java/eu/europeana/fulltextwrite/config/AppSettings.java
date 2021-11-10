@@ -12,7 +12,7 @@ import org.springframework.context.annotation.PropertySources;
 })
 public class AppSettings {
 
-  @Value("${auth.enabled: true}")
+  @Value("${auth.enabled}")
   private boolean authEnabled;
 
   @Value("${europeana.apikey.jwttoken.signaturekey}")

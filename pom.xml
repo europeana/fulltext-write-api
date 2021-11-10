@@ -27,7 +27,7 @@
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <spring-boot.version>2.5.5</spring-boot.version>
     <swagger.version>3.0.0</swagger.version>
-    <api.commons.version>0.3.8</api.commons.version>
+    <api.commons.version>0.3.10-SNAPSHOT</api.commons.version>
     <git-code-format.version>3.1</git-code-format.version>
   </properties>
 

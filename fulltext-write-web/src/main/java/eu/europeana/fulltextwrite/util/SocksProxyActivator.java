@@ -1,9 +1,9 @@
 package eu.europeana.fulltextwrite.util;
 
 import eu.europeana.fulltextwrite.config.SocksProxyConfig;
-import io.micrometer.core.instrument.util.StringUtils;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
