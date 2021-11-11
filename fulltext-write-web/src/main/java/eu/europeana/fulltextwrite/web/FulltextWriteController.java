@@ -6,11 +6,13 @@ import eu.europeana.api.commons.web.model.vocabulary.Operations;
 import eu.europeana.fulltextwrite.config.AppSettings;
 import io.swagger.annotations.ApiOperation;
 import javax.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,6 +49,24 @@ public class FulltextWriteController extends BaseRest {
     if (appSettings.isAuthEnabled()) {
       verifyWriteAccess(Operations.CREATE, request);
     }
-    return ResponseEntity.ok().build();
+    return generateResponse(request, "", HttpStatus.OK);
+  }
+
+  @ApiOperation(value = "Replaces existing fulltext for a media resource with a new document")
+  @PutMapping(
+      value = "/{datasetId}/{localId}/annopage/{pageId}",
+      produces = {HttpHeaders.CONTENT_TYPE_JSONLD, MediaType.APPLICATION_JSON_VALUE})
+  public ResponseEntity<?> replaceFullText(
+      @PathVariable(value = WebConstants.REQUEST_VALUE_DATASET_ID) String datasetId,
+      @PathVariable(value = WebConstants.REQUEST_VALUE_LOCAL_ID) String localId,
+      @PathVariable(value = WebConstants.REQUEST_VALUE_PAGE_ID) String pageId,
+      @RequestParam(value = WebConstants.REQUEST_VALUE_LANG) String lang,
+      HttpServletRequest request)
+      throws ApplicationAuthenticationException {
+
+    if (appSettings.isAuthEnabled()) {
+      verifyWriteAccess(Operations.UPDATE, request);
+    }
+    return generateResponse(request, "", HttpStatus.OK);
   }
 }
