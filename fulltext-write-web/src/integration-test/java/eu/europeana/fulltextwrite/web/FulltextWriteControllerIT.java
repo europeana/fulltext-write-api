@@ -1,5 +1,6 @@
 package eu.europeana.fulltextwrite.web;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -54,5 +55,14 @@ class FulltextWriteControllerIT extends BaseIntegrationTest {
                 .accept(MediaType.APPLICATION_JSON)
                 .content(requestBody))
         .andExpect(status().isOk());
+  }
+
+  @Test
+  void fulltextRemovalShouldBeSuccessful() throws Exception {
+    mockMvc
+        .perform(
+            delete(BASE_SERVICE_URL + "/9200338/BibliographicResource_3000094252504/annopage/1")
+                .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNoContent());
   }
 }

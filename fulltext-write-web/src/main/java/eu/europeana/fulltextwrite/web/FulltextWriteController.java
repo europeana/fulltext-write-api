@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -68,5 +69,22 @@ public class FulltextWriteController extends BaseRest {
       verifyWriteAccess(Operations.UPDATE, request);
     }
     return generateResponse(request, "", HttpStatus.OK);
+  }
+
+  @ApiOperation(value = "Deletes the full-text associated to a media resource\n")
+  @DeleteMapping(
+      value = "/{datasetId}/{localId}/annopage/{annoId}",
+      produces = {HttpHeaders.CONTENT_TYPE_JSONLD, MediaType.APPLICATION_JSON_VALUE})
+  public ResponseEntity<?> deleteFulltext(
+      @PathVariable(value = WebConstants.REQUEST_VALUE_DATASET_ID) String datasetId,
+      @PathVariable(value = WebConstants.REQUEST_VALUE_LOCAL_ID) String localId,
+      @PathVariable(value = WebConstants.REQUEST_VALUE_ANNO_ID) String annoId,
+      HttpServletRequest request)
+      throws ApplicationAuthenticationException {
+
+    if (appSettings.isAuthEnabled()) {
+      verifyWriteAccess(Operations.DELETE, request);
+    }
+    return noContentResponse(request);
   }
 }
