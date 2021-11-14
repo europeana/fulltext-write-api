@@ -28,4 +28,10 @@ public class BaseRest extends BaseRestController {
 
     return ResponseEntity.status(status).headers(headers).body(responseBody);
   }
+
+  protected ResponseEntity<String> noContentResponse(HttpServletRequest request) {
+    HttpHeaders headers = new HttpHeaders();
+    headers.add(HttpHeaders.ALLOW, getMethodsForRequestPattern(request, requestPathMethodService));
+    return ResponseEntity.noContent().headers(headers).build();
+  }
 }
