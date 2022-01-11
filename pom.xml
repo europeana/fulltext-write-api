@@ -4,7 +4,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <modules>
-    <module>fulltext-write-web</module>
+    <module>api</module>
   </modules>
 
   <parent>
@@ -28,7 +28,11 @@
     <spring-boot.version>2.5.5</spring-boot.version>
     <swagger.version>3.0.0</swagger.version>
     <api.commons.version>0.3.10-SNAPSHOT</api.commons.version>
+    <api.fulltext.version>0.8.2-SNAPSHOT</api.fulltext.version>
+    <springbatch.mongo.version>1.0.4-SNAPSHOT</springbatch.mongo.version>
     <git-code-format.version>3.1</git-code-format.version>
+    <morphia.version>2.1.4</morphia.version>
+    <snappy.version>1.1.7.2</snappy.version>
   </properties>
 
   <dependencyManagement>
