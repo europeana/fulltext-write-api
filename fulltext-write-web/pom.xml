@@ -59,6 +59,41 @@
       <version>${api.commons.version}</version>
     </dependency>
 
+    <!-- Fulltext Common Module for Mongo entities. This includes morphia and xerial snappy -->
+    <dependency>
+      <groupId>eu.europeana.fulltext</groupId>
+      <artifactId>common</artifactId>
+      <version>0.8.2-SNAPSHOT</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-autoconfigure</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <!-- Dependencies for Mongo write/read operation-->
+    <dependency>
+      <groupId>org.springframework.data</groupId>
+      <artifactId>spring-data-mongodb</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mongodb</groupId>
+      <artifactId>mongo-java-driver</artifactId>
+      <version>3.4.2</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.io-informatics.oss</groupId>
+      <artifactId>jackson-jsonld</artifactId>
+      <version>0.1.1</version>
+    </dependency>
+
     <dependency>
       <groupId>eu.europeana.api.commons</groupId>
       <artifactId>commons-web</artifactId>

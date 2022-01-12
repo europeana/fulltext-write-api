@@ -3,6 +3,7 @@ package eu.europeana.fulltextwrite.web;
 import eu.europeana.api.commons.service.authorization.AuthorizationService;
 import eu.europeana.api.commons.web.controller.BaseRestController;
 import eu.europeana.api.commons.web.service.AbstractRequestPathMethodService;
+import eu.europeana.fulltextwrite.util.FulltextWriteUtils;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -13,8 +14,14 @@ public class BaseRest extends BaseRestController {
   @Autowired private AuthorizationService emAuthorizationService;
   @Autowired private AbstractRequestPathMethodService requestPathMethodService;
 
+  private FulltextWriteUtils fulltextWriteUtils = new FulltextWriteUtils();
+
   protected AuthorizationService getAuthorizationService() {
     return emAuthorizationService;
+  }
+
+  public FulltextWriteUtils getFulltextWriteUtils() {
+    return fulltextWriteUtils;
   }
 
   protected ResponseEntity<String> generateResponse(

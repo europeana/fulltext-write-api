@@ -24,6 +24,9 @@ public class AppSettings {
   @Value("${europeana.apikey.serviceurl}")
   private String apiKeyUrl;
 
+  @Value("${fulltext.service.url}")
+  private String fulltextApiUrl;
+
   public boolean isAuthEnabled() {
     return authEnabled;
   }
@@ -38,5 +41,9 @@ public class AppSettings {
 
   public String getApiKeyUrl() {
     return apiKeyUrl;
+  }
+
+  public String getFulltextApiUrl() {
+    return fulltextApiUrl;
   }
 }
