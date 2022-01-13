@@ -1,4 +1,4 @@
-package eu.europeana.fulltextwrite.web.service;
+package eu.europeana.fulltextwrite.service;
 
 import eu.europeana.fulltextwrite.config.AppSettings;
 import eu.europeana.fulltextwrite.model.external.AnnotationItem;

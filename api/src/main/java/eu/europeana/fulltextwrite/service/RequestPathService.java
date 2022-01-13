@@ -1,4 +1,4 @@
-package eu.europeana.fulltextwrite.web.service;
+package eu.europeana.fulltextwrite.service;
 
 import eu.europeana.api.commons.web.service.AbstractRequestPathMethodService;
 import org.springframework.beans.factory.annotation.Autowired;

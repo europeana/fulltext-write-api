@@ -1,7 +1,7 @@
 package eu.europeana.fulltextwrite.batch.reader;
 
 import eu.europeana.fulltextwrite.model.external.AnnotationItem;
-import eu.europeana.fulltextwrite.web.service.AnnotationsRestService;
+import eu.europeana.fulltextwrite.service.AnnotationsRestService;
 import java.util.Iterator;
 import java.util.List;
 import org.springframework.batch.item.data.AbstractPaginatedDataItemReader;

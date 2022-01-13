@@ -1,4 +1,4 @@
-package eu.europeana.fulltextwrite.web.service;
+package eu.europeana.fulltextwrite.service;
 
 import eu.europeana.api.commons.definitions.vocabulary.Role;
 import eu.europeana.api.commons.oauth2.service.impl.EuropeanaClientDetailsService;

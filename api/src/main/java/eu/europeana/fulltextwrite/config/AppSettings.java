@@ -61,6 +61,9 @@ public class AppSettings {
     return apiKeyUrl;
   }
 
+  @Value("${fulltext.service.url}")
+  private String fulltextApiUrl;
+
   public String getBatchDatabase() {
     return batchDatabase;
   }
@@ -87,5 +90,9 @@ public class AppSettings {
 
   public int getAnnotationItemsPageSize() {
     return annotationItemsPageSize;
+  }
+
+  public String getFulltextApiUrl() {
+    return fulltextApiUrl;
   }
 }
