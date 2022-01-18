@@ -45,6 +45,9 @@ public class AppSettings {
   @Value("${batch.annotations.pageSize: 50}")
   private int annotationItemsPageSize;
 
+  @Value("${fulltext.service.url}")
+  private String fulltextApiUrl;
+
   public boolean isAuthEnabled() {
     return authEnabled;
   }
@@ -60,9 +63,6 @@ public class AppSettings {
   public String getApiKeyUrl() {
     return apiKeyUrl;
   }
-
-  @Value("${fulltext.service.url}")
-  private String fulltextApiUrl;
 
   public String getBatchDatabase() {
     return batchDatabase;

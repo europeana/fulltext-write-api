@@ -24,7 +24,7 @@ public class AnnotationPreviewCreateProcessor
     annotationPreview.setSubtitle(
         new ByteArrayInputStream(item.getBody().getValue().getBytes(StandardCharsets.UTF_8)));
     annotationPreview.setChangeType(getChangeType(item));
-    annotationPreview.setSubtitleType(SubtitleType.valueOf(item.getBody().getFormat()));
+    annotationPreview.setSubtitleType(SubtitleType.getValueByMimetype(item.getBody().getFormat()));
 
     return annotationPreview;
   }

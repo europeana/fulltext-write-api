@@ -1,5 +1,6 @@
 package eu.europeana.fulltextwrite.serializer;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europeana.fulltext.entity.AnnoPage;
 import ioinformarics.oss.jackson.module.jsonld.JsonldModule;
@@ -39,6 +40,7 @@ public class JsonLdSerializer {
    */
   public String serialize(AnnoPage annoPage) throws IOException {
     mapper.registerModule(new JsonldModule());
+    mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     return mapper.writer().writeValueAsString(getUserSetResourceBuilder().build(annoPage));
   }
 }

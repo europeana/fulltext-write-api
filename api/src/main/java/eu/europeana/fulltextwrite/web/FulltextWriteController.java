@@ -5,28 +5,30 @@ import eu.europeana.api.commons.web.exception.ApplicationAuthenticationException
 import eu.europeana.api.commons.web.http.HttpHeaders;
 import eu.europeana.api.commons.web.model.vocabulary.Operations;
 import eu.europeana.fulltext.entity.AnnoPage;
+import eu.europeana.fulltext.entity.Annotation;
 import eu.europeana.fulltextwrite.config.AppSettings;
 import eu.europeana.fulltextwrite.exception.AnnoPageExistException;
 import eu.europeana.fulltextwrite.exception.MediaTypeNotSupportedException;
+import eu.europeana.fulltextwrite.model.AnnotationChangeType;
+import eu.europeana.fulltextwrite.model.AnnotationPreview;
+import eu.europeana.fulltextwrite.model.SubtitleType;
+import eu.europeana.fulltextwrite.model.edm.FulltextPackage;
 import eu.europeana.fulltextwrite.repository.AnnotationRepository;
 import eu.europeana.fulltextwrite.serializer.JsonLdSerializer;
+import eu.europeana.fulltextwrite.service.SubtitleHandler;
+import eu.europeana.fulltextwrite.service.SubtitleToEDMHandler;
+import eu.europeana.fulltextwrite.util.EDMToFulltextConverter;
+import eu.europeana.fulltextwrite.util.FulltextWriteUtils;
 import io.swagger.annotations.ApiOperation;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import javax.servlet.http.HttpServletRequest;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Validated
@@ -58,23 +60,25 @@ public class FulltextWriteController extends BaseRest {
               defaultValue = "false")
           boolean originalLang,
       @RequestParam(value = WebConstants.REQUEST_VALUE_RIGHTS) String rights,
-      @RequestPart(value = WebConstants.REQUEST_VALUE_DOC) MultipartFile file,
+      @RequestBody String content,
       HttpServletRequest request)
       throws ApplicationAuthenticationException, EuropeanaApiException, IOException {
 
     if (appSettings.isAuthEnabled()) {
       verifyWriteAccess(Operations.CREATE, request);
     }
-    return submitNewFulltext(datasetId, localId, media, lang, originalLang, rights, request);
+    return addNewFulltext(
+        datasetId, localId, media, lang, originalLang, rights, content, request);
   }
 
-  private ResponseEntity<?> submitNewFulltext(
+  private ResponseEntity<?> addNewFulltext(
       String datasetId,
       String localId,
       String media,
       String lang,
       boolean originalLang,
       String rights,
+      String content,
       HttpServletRequest request)
       throws EuropeanaApiException, IOException {
 
@@ -84,29 +88,40 @@ public class FulltextWriteController extends BaseRest {
     if (annoPage != null) {
       throw new AnnoPageExistException(
           "Annotation page already exists -"
-              + getFulltextWriteUtils().getAnnoPageUrl(appSettings.getFulltextApiUrl(), annoPage));
+              + FulltextWriteUtils.getAnnoPageUrl(appSettings.getFulltextApiUrl(), annoPage));
     }
 
-    // TODO this is still unclear to me the supported content or mime type, how do we handle it
-    // for the textToEDMHandler hence for now a general check
-    if (!StringUtils.contains(request.getContentType(), "multipart/form-data")) {
+    if (!SubtitleType.isSupported(request.getContentType())) {
       throw new MediaTypeNotSupportedException(
           "The content type " + request.getContentType() + " is not supported");
     }
-    // TODO - these further steps will be done once we have the Handler code
+
+    SubtitleType type = SubtitleType.getValueByMimetype(request.getContentType());
+    AnnotationPreview annotationPreview =
+        new AnnotationPreview(
+            FulltextWriteUtils.generateRecordId(datasetId, localId),
+            media,
+            lang,
+            rights,
+            originalLang,
+            type,
+            new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)),
+            AnnotationChangeType.NEWLY_CREATED);
 
     // Select a Text2EDM handler that matches the indicated Content-Type and
-    // apply it to the binary to convert into an EDM based object model, if not successful return
-    // HTTP 400;
-    // Assign identifiers to all assets produced by the handler (ie. Annotation Pages, Annotations,
-    // Fulltext WebResource)
+    // apply it to the binary to convert into an EDM based object model, if not successful return HTTP 400;
+    FulltextPackage fulltext = new SubtitleToEDMHandler().subtitleToEDM(annotationPreview);
+    // Conversion for testing
+    AnnoPage annoPage1 = EDMToFulltextConverter.getAnnoPage(datasetId, localId, annotationPreview, fulltext);
 
-    // TODO will save a proper record - for now storing dummy record
-    AnnoPage convertedAnnoPage =
-        getFulltextWriteUtils().createDummyAnnotation(datasetId, localId, media, rights, lang);
-    AnnoPage saved = annotationRepository.saveAnnoPage(convertedAnnoPage);
-    String jsonLd = new JsonLdSerializer().serialize(saved);
-    return generateResponse(request, jsonLd, HttpStatus.OK);
+    //TODO will save a proper record later as a part of EA-2827
+    // Keep in mind to store Resource as well and based on originallanguege - AnnoPage or TranslationAnnoPage
+//    AnnoPage convertedAnnoPage =
+//        FulltextWriteUtils.createDummyAnnotation(datasetId, localId, media, rights, lang);
+     AnnoPage saved = annotationRepository.saveAnnoPage(annoPage1);
+     String jsonLd = new JsonLdSerializer().serialize(saved);
+     return generateResponse(request, jsonLd, HttpStatus.OK);
+   // return generateResponse(request, "done", HttpStatus.OK);
   }
 
   @ApiOperation(value = "Replaces existing fulltext for a media resource with a new document")

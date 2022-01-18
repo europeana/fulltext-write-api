@@ -16,6 +16,27 @@ public class AnnotationPreview {
   private AnnotationChangeType changeType;
   private List<SubtitleItem> subtitleItems;
 
+  public AnnotationPreview() {}
+
+  public AnnotationPreview(
+      String recordId,
+      String media,
+      String language,
+      String rights,
+      boolean originalLang,
+      SubtitleType subtitleType,
+      InputStream subtitle,
+      AnnotationChangeType changeType) {
+    this.recordId = recordId;
+    this.media = media;
+    this.language = language;
+    this.rights = rights;
+    this.originalLang = originalLang;
+    this.subtitleType = subtitleType;
+    this.subtitle = subtitle;
+    this.changeType = changeType;
+  }
+
   public void setRecordId(String recordId) {
     this.recordId = recordId;
   }
