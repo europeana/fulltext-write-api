@@ -32,13 +32,6 @@ public class SubtitleHandler {
     if (subtitleImportHandler == null) {
       throw new InvalidFormatException("Format not supported : " + subtitleType.getMimeType());
     }
-    // Could be done two ways either try converting with every handler possible and
-    // then it will return if something matches with the data or will throw an exception
-    // secondly, we already know which handler works for which mimetype and instatitae that
-    // implemnetaion only for conversion
-    // in the second approach -> we must send the content-type properly
-    // SubtitleImporter importer = new SubtitleImporter();
-    // return importer.importFile(text, defaultSubtitleConfig);
     try {
       return subtitleImportHandler.importFile(text, defaultSubtitleConfig);
     } catch (FileFormatException e) {
