@@ -33,17 +33,25 @@ public class FullTextResource implements Reference {
     return lang;
   }
 
+  public String getRights() {
+    return rights;
+  }
+
+  public String getRecordURI() {
+    return recordURI;
+  }
+
   public FullTextResource getResource() {
     return this;
   }
 
   @Override
   public String getResourceURL() {
-    return fullTextResourceURI;
+    return getFullTextResourceURI();
   }
 
   @Override
   public String getURL() {
-    return fullTextResourceURI;
+    return getResourceURL();
   }
 }
