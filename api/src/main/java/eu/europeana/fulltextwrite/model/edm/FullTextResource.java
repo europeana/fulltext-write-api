@@ -46,25 +46,4 @@ public class FullTextResource implements Reference {
   public String getURL() {
     return fullTextResourceURI;
   }
-
-  @Override
-  public String toString() {
-    return "FullTextResource{"
-        + "fullTextResourceURI='"
-        + fullTextResourceURI
-        + '\''
-        + ", value='"
-        + value
-        + '\''
-        + ", lang='"
-        + lang
-        + '\''
-        + ", rights='"
-        + rights
-        + '\''
-        + ", recordURI='"
-        + recordURI
-        + '\''
-        + '}';
-  }
 }

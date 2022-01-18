@@ -47,8 +47,4 @@ public class TextBoundary implements Reference {
     return getResourceURL() + getFragment();
   }
 
-  @Override
-  public String toString() {
-    return "TextBoundary{" + " from=" + from + ", to=" + to + '}';
-  }
 }

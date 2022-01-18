@@ -58,24 +58,4 @@ public class Annotation {
   public boolean hasTargets() {
     return !targets.isEmpty();
   }
-
-  @Override
-  public String toString() {
-    return "Annotation{"
-        + "annoId='"
-        + annoId
-        + '\''
-        + ", textReference="
-        + textReference
-        + ", targets="
-        + targets
-        + ", type="
-        + type
-        + ", lang='"
-        + lang
-        + '\''
-        + ", confidence="
-        + confidence
-        + '}';
-  }
 }

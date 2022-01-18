@@ -55,17 +55,4 @@ public class TimeBoundary implements Reference {
   public String getURL() {
     return getResourceURL() + getFragment();
   }
-
-  @Override
-  public String toString() {
-    return "TimeBoundary{"
-        + "resourceUrl='"
-        + resourceUrl
-        + '\''
-        + ", start="
-        + start
-        + ", end="
-        + end
-        + '}';
-  }
 }

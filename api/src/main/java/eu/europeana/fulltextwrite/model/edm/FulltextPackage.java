@@ -7,7 +7,6 @@ public class FulltextPackage extends ArrayList<Annotation> {
 
   private String baseURI;
   private FullTextResource resource;
-  List<Annotation> annotationList;
 
   public FulltextPackage(String baseURI, FullTextResource resource) {
     this.resource = resource;
@@ -35,26 +34,5 @@ public class FulltextPackage extends ArrayList<Annotation> {
       return false;
     }
     return !lang.equals(resource.getLang());
-  }
-
-  @Override
-  public String toString() {
-    return "FulltextPackage{"
-        + "baseURI='"
-        + baseURI
-        + '\''
-        +
-         ", resource=" + resource +
-        "Annoations ="
-        + printAnnotations()
-        + "}";
-  }
-
-  private List<Annotation> printAnnotations() {
-    List<Annotation> annotations = new ArrayList<>();
-    for (int i = 0; i < size(); i++) {
-      annotations.add(get(i));
-    }
-    return annotations;
   }
 }
