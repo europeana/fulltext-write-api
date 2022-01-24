@@ -14,9 +14,9 @@ version: "3.9"
 services:
   db:
     build:
-      context: ./entity-management-web/src/integration-test/resources/mongo-docker
+      context: ./api/src/integration-test/resources/mongo-docker
       dockerfile: Dockerfile
-    container_name: mongodb
+    container_name: fulltext-write-mongo
     ports:
       - "27017:27017"
     environment:

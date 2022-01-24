@@ -13,4 +13,6 @@ public class AppConstants {
   public static final String SPRINGBATCH_DATASTORE_BEAN = "springBatchDatastore";
 
   public static final Configuration defaultSubtitleConfig = new Configuration();
+
+  public static final String CONTENT_TYPE_VTT = "text/vtt";
 }

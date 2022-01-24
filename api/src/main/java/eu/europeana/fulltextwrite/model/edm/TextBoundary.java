@@ -25,7 +25,7 @@ public class TextBoundary implements Reference {
   }
 
   public String getFragment() {
-    if(from == 0 && to == 0) {
+    if (from == 0 && to == 0) {
       return "";
     } else {
       return ("#char=" + from + "," + to);
@@ -46,5 +46,4 @@ public class TextBoundary implements Reference {
   public String getURL() {
     return getResourceURL() + getFragment();
   }
-
 }

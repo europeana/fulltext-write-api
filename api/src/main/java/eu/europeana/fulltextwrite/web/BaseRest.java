@@ -1,8 +1,12 @@
 package eu.europeana.fulltextwrite.web;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europeana.api.commons.service.authorization.AuthorizationService;
 import eu.europeana.api.commons.web.controller.BaseRestController;
 import eu.europeana.api.commons.web.service.AbstractRequestPathMethodService;
+import eu.europeana.fulltext.entity.AnnoPage;
+import ioinformarics.oss.jackson.module.jsonld.JsonldResourceBuilder;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -12,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 public class BaseRest extends BaseRestController {
   @Autowired private AuthorizationService emAuthorizationService;
   @Autowired private AbstractRequestPathMethodService requestPathMethodService;
+  @Autowired private ObjectMapper mapper;
+  @Autowired private JsonldResourceBuilder<AnnoPage> annoPageJsonldResourceBuilder;
 
   protected AuthorizationService getAuthorizationService() {
     return emAuthorizationService;
@@ -33,5 +39,9 @@ public class BaseRest extends BaseRestController {
     HttpHeaders headers = new HttpHeaders();
     headers.add(HttpHeaders.ALLOW, getMethodsForRequestPattern(request, requestPathMethodService));
     return ResponseEntity.noContent().headers(headers).build();
+  }
+
+  protected String serializeJsonLd(AnnoPage annoPage) throws JsonProcessingException {
+    return mapper.writeValueAsString(annoPageJsonldResourceBuilder.build(annoPage));
   }
 }

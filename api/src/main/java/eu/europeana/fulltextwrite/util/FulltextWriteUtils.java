@@ -7,7 +7,6 @@ import eu.europeana.fulltextwrite.model.edm.Reference;
 import eu.europeana.fulltextwrite.web.WebConstants;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.io.Charsets;
 import org.apache.jena.ext.com.google.common.hash.HashFunction;
 import org.apache.jena.ext.com.google.common.hash.Hasher;
@@ -15,7 +14,7 @@ import org.apache.jena.ext.com.google.common.hash.Hashing;
 
 public class FulltextWriteUtils {
 
-  //TODO switch to message digest or something that is not deprecated
+  // TODO switch to message digest or something that is not deprecated
   private static HashFunction hfText = Hashing.md5();
   private static HashFunction hfAnno = Hashing.md5();
 
@@ -25,6 +24,7 @@ public class FulltextWriteUtils {
 
   /**
    * Generates Annotation ID
+   *
    * @param annotation
    * @return
    */
@@ -45,6 +45,7 @@ public class FulltextWriteUtils {
 
   /**
    * Generates Annotation page url
+   *
    * @param itemID
    * @return
    */
@@ -54,6 +55,7 @@ public class FulltextWriteUtils {
 
   /**
    * Genrated fulltext Uri
+   *
    * @param itemID
    * @param id
    * @return
@@ -64,16 +66,13 @@ public class FulltextWriteUtils {
 
   /**
    * Generates record Id
+   *
    * @param datasetId
    * @param localId
    * @return
    */
   public static String generateRecordId(String datasetId, String localId) {
-    return new StringBuilder(WebConstants.URL_SEPARATOR)
-        .append(datasetId)
-        .append(WebConstants.URL_SEPARATOR)
-        .append(localId)
-        .toString();
+    return WebConstants.URL_SEPARATOR + datasetId + WebConstants.URL_SEPARATOR + localId;
   }
 
   /**
@@ -126,5 +125,4 @@ public class FulltextWriteUtils {
     annoPage.setAns(annotations);
     return annoPage;
   }
-
 }

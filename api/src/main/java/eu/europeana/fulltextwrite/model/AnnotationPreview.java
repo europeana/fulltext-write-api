@@ -1,72 +1,37 @@
 package eu.europeana.fulltextwrite.model;
 
 import com.dotsub.converter.model.SubtitleItem;
-import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 
 public class AnnotationPreview {
 
-  private String recordId;
-  private String media;
-  private String language;
-  private String rights;
-  private boolean originalLang;
-  private SubtitleType subtitleType;
-  private InputStream subtitle;
-  private AnnotationChangeType changeType;
+  private final String recordId;
+  private final String media;
+  private final String language;
+  private final String rights;
+  private final boolean originalLang;
+  private final SubtitleType subtitleType;
+  private final AnnotationChangeType changeType;
   private List<SubtitleItem> subtitleItems;
 
-  public AnnotationPreview() {}
-
-  public AnnotationPreview(
+  private AnnotationPreview(
       String recordId,
       String media,
       String language,
       String rights,
       boolean originalLang,
       SubtitleType subtitleType,
-      InputStream subtitle,
-      AnnotationChangeType changeType) {
+      AnnotationChangeType changeType,
+      List<SubtitleItem> subtitleItems) {
     this.recordId = recordId;
     this.media = media;
     this.language = language;
     this.rights = rights;
     this.originalLang = originalLang;
     this.subtitleType = subtitleType;
-    this.subtitle = subtitle;
     this.changeType = changeType;
-  }
-
-  public void setRecordId(String recordId) {
-    this.recordId = recordId;
-  }
-
-  public void setMedia(String media) {
-    this.media = media;
-  }
-
-  public void setLanguage(String language) {
-    this.language = language;
-  }
-
-  public void setRights(String rights) {
-    this.rights = rights;
-  }
-
-  public void setOriginalLang(boolean originalLang) {
-    this.originalLang = originalLang;
-  }
-
-  public void setSubtitleType(SubtitleType subtitleType) {
-    this.subtitleType = subtitleType;
-  }
-
-  public void setSubtitle(InputStream subtitle) {
-    this.subtitle = subtitle;
-  }
-
-  public void setChangeType(AnnotationChangeType changeType) {
-    this.changeType = changeType;
+    this.subtitleItems = subtitleItems;
   }
 
   public String getRecordId() {
@@ -93,10 +58,6 @@ public class AnnotationPreview {
     return subtitleType;
   }
 
-  public InputStream getSubtitle() {
-    return subtitle;
-  }
-
   public AnnotationChangeType getChangeType() {
     return changeType;
   }
@@ -105,7 +66,55 @@ public class AnnotationPreview {
     return subtitleItems;
   }
 
-  public void setSubtitleItems(List<SubtitleItem> subtitleItems) {
-    this.subtitleItems = subtitleItems;
+  public static class Builder {
+    private String recordId;
+    private String media;
+    private String language;
+    private String rights;
+    private boolean originalLang;
+    private SubtitleType subtitleType;
+    private AnnotationChangeType changeType;
+    private final List<SubtitleItem> subtitleItems;
+
+    public Builder(String recordId, SubtitleType subtitleType, List<SubtitleItem> subtitleItems) {
+      this.recordId = recordId;
+      this.subtitleType = subtitleType;
+      this.subtitleItems = Collections.unmodifiableList(subtitleItems);
+    }
+
+    public Builder setMedia(String media) {
+      this.media = media;
+      return this;
+    }
+
+    public Builder setLanguage(String language) {
+      this.language = language;
+      return this;
+    }
+
+    public Builder setRights(String rights) {
+      this.rights = rights;
+      return this;
+    }
+
+    public Builder setOriginalLang(boolean originalLang) {
+      this.originalLang = originalLang;
+      return this;
+    }
+
+    public Builder setSubtitleType(SubtitleType subtitleType) {
+      this.subtitleType = subtitleType;
+      return this;
+    }
+
+    public Builder setChangeType(AnnotationChangeType changeType) {
+      this.changeType = changeType;
+      return this;
+    }
+
+    public AnnotationPreview build() {
+      return new AnnotationPreview(
+          recordId, media, language, rights, originalLang, subtitleType, changeType, subtitleItems);
+    }
   }
 }

@@ -1,7 +1,6 @@
 package eu.europeana.fulltextwrite.model.edm;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class FulltextPackage extends ArrayList<Annotation> {
 

@@ -41,4 +41,9 @@ public class AnnotationRepository {
   public AnnoPage saveAnnoPage(AnnoPage annoPage) {
     return datastore.save(annoPage);
   }
+
+  /** Only for tests */
+  public void dropCollection() {
+    datastore.getMapper().getCollection(AnnoPage.class).drop();
+  }
 }

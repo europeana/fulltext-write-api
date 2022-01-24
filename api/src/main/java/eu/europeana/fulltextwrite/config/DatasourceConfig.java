@@ -5,6 +5,7 @@ import static eu.europeana.fulltextwrite.AppConstants.FULLTEXT_DATASTORE_BEAN;
 import static eu.europeana.fulltextwrite.AppConstants.SPRINGBATCH_DATASTORE_BEAN;
 
 import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import dev.morphia.Datastore;
 import dev.morphia.Morphia;
 import eu.europeana.batch.entity.PackageMapper;
@@ -23,6 +24,11 @@ public class DatasourceConfig {
 
   public DatasourceConfig(AppSettings settings) {
     this.settings = settings;
+  }
+
+  @Bean
+  public MongoClient mongoClient() {
+    return MongoClients.create(settings.getMongoConnectionUrl());
   }
 
   @Bean(FULLTEXT_DATASTORE_BEAN)
@@ -49,7 +55,7 @@ public class DatasourceConfig {
 
     logger.info("Configuring Batch database: {}", batchDatabase);
     Datastore datastore = Morphia.createDatastore(mongoClient, batchDatabase);
-    // Indexes aren't changeType unless Entity classes are explicitly mapped.
+    // Indexes aren't created unless Entity classes are explicitly mapped.
     datastore.getMapper().mapPackage(PackageMapper.class.getPackageName());
     datastore.ensureIndexes();
     return datastore;
