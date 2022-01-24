@@ -52,7 +52,7 @@ class FulltextWriteControllerIT extends BaseIntegrationTest {
                 .content(requestBody))
         .andExpect(status().isOk());
 
-    //TODO: check DB content
+    // TODO: check DB content
   }
 
   @Test
