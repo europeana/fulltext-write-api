@@ -3,6 +3,7 @@ package eu.europeana.fulltextwrite;
 import eu.europeana.fulltextwrite.config.SocksProxyConfig;
 import eu.europeana.fulltextwrite.util.SocksProxyActivator;
 import org.apache.logging.log4j.LogManager;
+import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -20,6 +21,7 @@ import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
       SecurityAutoConfiguration.class,
       ManagementWebSecurityAutoConfiguration.class,
     })
+@EnableBatchProcessing
 public class FulltextWriteApplication extends SpringBootServletInitializer {
 
   /**

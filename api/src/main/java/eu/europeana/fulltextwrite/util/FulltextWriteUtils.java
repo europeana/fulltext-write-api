@@ -72,7 +72,15 @@ public class FulltextWriteUtils {
    * @return
    */
   public static String generateRecordId(String datasetId, String localId) {
-    return WebConstants.URL_SEPARATOR + datasetId + WebConstants.URL_SEPARATOR + localId;
+    return "/" + datasetId + "/" + localId;
+  }
+
+  public static String getDsId(String recordId) {
+    return recordId.split("/")[1];
+  }
+
+  public static String getLocalId(String recordId) {
+    return recordId.split("/")[2];
   }
 
   /**
@@ -82,14 +90,19 @@ public class FulltextWriteUtils {
    * @param annoPage
    * @return
    */
-  public static String getAnnoPageUrl(String fulltextBaseUrl, AnnoPage annoPage) {
-    StringBuilder annoPageUrl = new StringBuilder(fulltextBaseUrl);
-    annoPageUrl.append(WebConstants.URL_SEPARATOR).append(WebConstants.PRESENTATION);
-    annoPageUrl.append(WebConstants.URL_SEPARATOR).append(annoPage.getDsId());
-    annoPageUrl.append(WebConstants.URL_SEPARATOR).append(annoPage.getLcId());
-    annoPageUrl.append(WebConstants.URL_SEPARATOR).append(WebConstants.ANNOPAGE);
-    annoPageUrl.append(WebConstants.URL_SEPARATOR).append(annoPage.getPgId());
-    return annoPageUrl.toString();
+  public static String getAnnoPageUrl(AnnoPage annoPage) {
+    String annoPageUrl =
+        "/"
+            + WebConstants.PRESENTATION
+            + "/"
+            + annoPage.getDsId()
+            + "/"
+            + annoPage.getLcId()
+            + "/"
+            + WebConstants.ANNOPAGE
+            + "/"
+            + annoPage.getPgId();
+    return annoPageUrl;
   }
 
   /**
@@ -124,5 +137,9 @@ public class FulltextWriteUtils {
     AnnoPage annoPage = new AnnoPage(datasetId, localId, "1", media, lang, resource);
     annoPage.setAns(annotations);
     return annoPage;
+  }
+
+  public static String[] getAnnoPageToString(List<? extends AnnoPage> annoPages) {
+    return annoPages.stream().map(AnnoPage::toString).toArray(String[]::new);
   }
 }

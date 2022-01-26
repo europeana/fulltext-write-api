@@ -19,7 +19,6 @@ public class WebConstants {
   // Fulltext Urls constants
   public static final String PRESENTATION = "presentation";
   public static final String ANNOPAGE = "annopage";
-  public static final String URL_SEPARATOR = "/";
   public static final String BASE_ITEM_URL = "http://data.europeana.eu/item";
   public static final String BASE_FULLTEXT_URL = "http://data.europeana.eu/fulltext";
 }

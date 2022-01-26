@@ -12,6 +12,8 @@ public class MongoContainer extends GenericContainer<MongoContainer> {
   private final String adminUsername = "admin";
   private final String adminPassword = "password";
 
+  private final boolean useFixedPorts = false;
+
   /**
    * Creates a new Mongo container instance
    *
@@ -32,7 +34,11 @@ public class MongoContainer extends GenericContainer<MongoContainer> {
   public MongoContainer(ImageFromDockerfile dockerImageName, String fulltextDb, String batchDb) {
     super(dockerImageName);
 
-    this.withExposedPorts(27017);
+    if (useFixedPorts) {
+      this.addFixedExposedPort(27018, 27017);
+    } else {
+      this.withExposedPorts(27017);
+    }
 
     this.withEnv("ROOT_USERNAME", adminUsername)
         .withEnv("ROOT_PASSWORD", adminPassword)

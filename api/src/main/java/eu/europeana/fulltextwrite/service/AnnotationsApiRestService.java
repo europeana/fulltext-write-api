@@ -12,13 +12,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
-public class AnnotationsRestService {
+public class AnnotationsApiRestService {
   private final WebClient webClient;
-  private static final Logger logger = LogManager.getLogger(AnnotationsRestService.class);
+  private static final Logger logger = LogManager.getLogger(AnnotationsApiRestService.class);
 
   private final String wskey;
 
-  public AnnotationsRestService(AppSettings settings) {
+  public AnnotationsApiRestService(AppSettings settings) {
     this.wskey = settings.getAnnotationsApiKey();
     this.webClient = WebClient.builder().baseUrl(settings.getAnnotationsApiUrl()).build();
   }
@@ -32,7 +32,7 @@ public class AnnotationsRestService {
                     uriBuilder
                         .path("/annotation/search")
                         .queryParam("wskey", wskey)
-                        .queryParam("query", "*")
+                        .queryParam("query", "motivation:subtitling")
                         .queryParam("sort", "changeType")
                         .queryParam("sortOrder", "desc")
                         .queryParam("page", page)

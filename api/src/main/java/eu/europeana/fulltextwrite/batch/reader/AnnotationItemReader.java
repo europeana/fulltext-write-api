@@ -1,16 +1,16 @@
 package eu.europeana.fulltextwrite.batch.reader;
 
 import eu.europeana.fulltextwrite.model.external.AnnotationItem;
-import eu.europeana.fulltextwrite.service.AnnotationsRestService;
+import eu.europeana.fulltextwrite.service.AnnotationsApiRestService;
 import java.util.Iterator;
 import java.util.List;
 import org.springframework.batch.item.data.AbstractPaginatedDataItemReader;
 
 public class AnnotationItemReader extends AbstractPaginatedDataItemReader<AnnotationItem> {
 
-  private final AnnotationsRestService annotationsRestService;
+  private final AnnotationsApiRestService annotationsRestService;
 
-  public AnnotationItemReader(AnnotationsRestService annotationsRestService, int pageSize) {
+  public AnnotationItemReader(AnnotationsApiRestService annotationsRestService, int pageSize) {
     this.annotationsRestService = annotationsRestService;
     setPageSize(pageSize);
     // Non-restartable, as we expect this to run in multi-threaded steps.

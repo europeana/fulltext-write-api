@@ -7,16 +7,12 @@ import eu.europeana.api.commons.web.http.HttpHeaders;
 import eu.europeana.api.commons.web.model.vocabulary.Operations;
 import eu.europeana.fulltext.entity.AnnoPage;
 import eu.europeana.fulltextwrite.config.AppSettings;
-import eu.europeana.fulltextwrite.exception.AnnoPageExistException;
 import eu.europeana.fulltextwrite.exception.MediaTypeNotSupportedException;
-import eu.europeana.fulltextwrite.model.AnnotationChangeType;
 import eu.europeana.fulltextwrite.model.AnnotationPreview;
 import eu.europeana.fulltextwrite.model.AnnotationPreview.Builder;
 import eu.europeana.fulltextwrite.model.SubtitleType;
-import eu.europeana.fulltextwrite.model.edm.FulltextPackage;
-import eu.europeana.fulltextwrite.repository.AnnotationRepository;
+import eu.europeana.fulltextwrite.service.AnnotationService;
 import eu.europeana.fulltextwrite.service.SubtitleHandlerService;
-import eu.europeana.fulltextwrite.util.EDMToFulltextConverter;
 import eu.europeana.fulltextwrite.util.FulltextWriteUtils;
 import io.swagger.annotations.ApiOperation;
 import java.io.ByteArrayInputStream;
@@ -36,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @Validated
@@ -43,16 +40,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class FulltextWriteController extends BaseRest {
 
   private final AppSettings appSettings;
-  private final AnnotationRepository annotationRepository;
   private final SubtitleHandlerService subtitleHandlerService;
+
+  private final AnnotationService annotationService;
 
   public FulltextWriteController(
       AppSettings appSettings,
-      AnnotationRepository annotationRepository,
-      SubtitleHandlerService subtitleHandlerService) {
+      SubtitleHandlerService subtitleHandlerService,
+      AnnotationService annotationService) {
     this.appSettings = appSettings;
-    this.annotationRepository = annotationRepository;
     this.subtitleHandlerService = subtitleHandlerService;
+    this.annotationService = annotationService;
   }
 
   @ApiOperation(
@@ -96,11 +94,17 @@ public class FulltextWriteController extends BaseRest {
      * Check if there is a fulltext annotation page associated with the combination of DATASET_ID,
      * LOCAL_ID and the media URL, if so then return a HTTP 301 with the URL of the Annotation Page
      */
-    AnnoPage annoPage = annotationRepository.getAnnoPageByTargetId(datasetId, localId, media);
+    AnnoPage annoPage = annotationService.getAnnoPageByTargetId(datasetId, localId, media);
     if (annoPage != null) {
-      throw new AnnoPageExistException(
-          "Annotation page already exists -"
-              + FulltextWriteUtils.getAnnoPageUrl(appSettings.getFulltextApiUrl(), annoPage));
+      // return 301 redirect
+      return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
+          .location(
+              UriComponentsBuilder.newInstance()
+                  .host(appSettings.getFulltextApiUrl())
+                  .path(FulltextWriteUtils.getAnnoPageUrl(annoPage))
+                  .build()
+                  .toUri())
+          .build();
     }
 
     SubtitleType type = SubtitleType.getValueByMimetype(request.getContentType());
@@ -121,26 +125,10 @@ public class FulltextWriteController extends BaseRest {
             .setLanguage(lang)
             .setRights(rights)
             .setMedia(media)
-            .setChangeType(AnnotationChangeType.NEWLY_CREATED)
             .build();
-    /*
-     *  Select a Text2EDM handler that matches the indicated Content-Type and
-     * apply it to the binary to convert into an EDM based object model, if not successful return HTTP 400
-     */
 
-    FulltextPackage fulltext = subtitleHandlerService.convert(annotationPreview);
-    // Conversion for testing
-    AnnoPage annoPage1 =
-        EDMToFulltextConverter.getAnnoPage(datasetId, localId, annotationPreview, fulltext);
-
-    // TODO will save a proper record later as a part of EA-2827
-    // Keep in mind to store Resource as well and based on originallanguege - AnnoPage or
-    // TranslationAnnoPage
-    //    AnnoPage convertedAnnoPage =
-    //        FulltextWriteUtils.createDummyAnnotation(datasetId, localId, media, rights, lang);
-    AnnoPage saved = annotationRepository.saveAnnoPage(annoPage1);
-    String jsonLd = serializeJsonLd(saved);
-    return generateResponse(request, jsonLd, HttpStatus.OK);
+    AnnoPage savedAnnoPage = annotationService.createAndSaveAnnoPage(annotationPreview);
+    return generateResponse(request, serializeJsonLd(savedAnnoPage), HttpStatus.OK);
   }
 
   @ApiOperation(value = "Replaces existing fulltext for a media resource with a new document")

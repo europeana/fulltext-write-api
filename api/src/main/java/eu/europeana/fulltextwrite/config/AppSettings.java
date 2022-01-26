@@ -48,6 +48,15 @@ public class AppSettings {
   @Value("${fulltext.service.url}")
   private String fulltextApiUrl;
 
+  @Value("${batch.executor.corePool: 5}")
+  private int batchCorePoolSize;
+
+  @Value("${batch.executor.maxPool: 10}")
+  private int batchMaxPoolSize;
+
+  @Value("${batch.step.executor.queueSize: 5}")
+  private int batchQueueSize;
+
   public boolean isAuthEnabled() {
     return authEnabled;
   }
@@ -94,5 +103,17 @@ public class AppSettings {
 
   public String getFulltextApiUrl() {
     return fulltextApiUrl;
+  }
+
+  public int getBatchCorePoolSize() {
+    return batchCorePoolSize;
+  }
+
+  public int getBatchMaxPoolSize() {
+    return batchMaxPoolSize;
+  }
+
+  public int getBatchQueueSize() {
+    return batchQueueSize;
   }
 }

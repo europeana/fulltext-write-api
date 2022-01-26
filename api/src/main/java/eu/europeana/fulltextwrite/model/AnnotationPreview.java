@@ -12,7 +12,6 @@ public class AnnotationPreview {
   private final String rights;
   private final boolean originalLang;
   private final SubtitleType subtitleType;
-  private final AnnotationChangeType changeType;
   private List<SubtitleItem> subtitleItems;
 
   private AnnotationPreview(
@@ -22,7 +21,6 @@ public class AnnotationPreview {
       String rights,
       boolean originalLang,
       SubtitleType subtitleType,
-      AnnotationChangeType changeType,
       List<SubtitleItem> subtitleItems) {
     this.recordId = recordId;
     this.media = media;
@@ -30,7 +28,6 @@ public class AnnotationPreview {
     this.rights = rights;
     this.originalLang = originalLang;
     this.subtitleType = subtitleType;
-    this.changeType = changeType;
     this.subtitleItems = subtitleItems;
   }
 
@@ -58,10 +55,6 @@ public class AnnotationPreview {
     return subtitleType;
   }
 
-  public AnnotationChangeType getChangeType() {
-    return changeType;
-  }
-
   public List<SubtitleItem> getSubtitleItems() {
     return subtitleItems;
   }
@@ -73,7 +66,6 @@ public class AnnotationPreview {
     private String rights;
     private boolean originalLang;
     private SubtitleType subtitleType;
-    private AnnotationChangeType changeType;
     private final List<SubtitleItem> subtitleItems;
 
     public Builder(String recordId, SubtitleType subtitleType, List<SubtitleItem> subtitleItems) {
@@ -107,14 +99,9 @@ public class AnnotationPreview {
       return this;
     }
 
-    public Builder setChangeType(AnnotationChangeType changeType) {
-      this.changeType = changeType;
-      return this;
-    }
-
     public AnnotationPreview build() {
       return new AnnotationPreview(
-          recordId, media, language, rights, originalLang, subtitleType, changeType, subtitleItems);
+          recordId, media, language, rights, originalLang, subtitleType, subtitleItems);
     }
   }
 }

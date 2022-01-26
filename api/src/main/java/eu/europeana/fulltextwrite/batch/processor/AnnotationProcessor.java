@@ -1,26 +1,42 @@
 package eu.europeana.fulltextwrite.batch.processor;
 
 import com.dotsub.converter.model.SubtitleItem;
+import eu.europeana.fulltext.entity.AnnoPage;
+import eu.europeana.fulltextwrite.exception.InvalidFormatException;
 import eu.europeana.fulltextwrite.exception.SubtitleParsingException;
-import eu.europeana.fulltextwrite.model.AnnotationChangeType;
 import eu.europeana.fulltextwrite.model.AnnotationPreview;
 import eu.europeana.fulltextwrite.model.SubtitleType;
 import eu.europeana.fulltextwrite.model.external.AnnotationItem;
+import eu.europeana.fulltextwrite.service.AnnotationService;
 import eu.europeana.fulltextwrite.service.SubtitleHandlerService;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.List;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Component;
 
-public class AnnotationPreviewCreateProcessor
-    implements ItemProcessor<AnnotationItem, AnnotationPreview> {
+@Component
+public class AnnotationProcessor implements ItemProcessor<AnnotationItem, AnnoPage> {
 
-  private SubtitleHandlerService subtitleHandlerService;
-  private Instant lastUpdateRun;
+  private final SubtitleHandlerService subtitleHandlerService;
+  private final AnnotationService annotationService;
+
+  public AnnotationProcessor(
+      SubtitleHandlerService subtitleHandlerService, AnnotationService annotationService) {
+    this.subtitleHandlerService = subtitleHandlerService;
+    this.annotationService = annotationService;
+  }
 
   @Override
-  public AnnotationPreview process(AnnotationItem item) throws Exception {
+  public AnnoPage process(@NonNull AnnotationItem item) throws Exception {
+    AnnotationPreview annotationPreview = createAnnotationPreview(item);
+    return annotationService.getAnnoPage(annotationPreview);
+  }
+
+  private AnnotationPreview createAnnotationPreview(AnnotationItem item)
+      throws SubtitleParsingException, IOException, InvalidFormatException {
     SubtitleType subtitleType = SubtitleType.getValueByMimetype(item.getBody().getFormat());
 
     if (subtitleType == null) {
@@ -39,14 +55,6 @@ public class AnnotationPreviewCreateProcessor
         .setMedia(item.getTarget().getSource())
         .setLanguage(item.getBody().getLanguage())
         .setRights(item.getBody().getEdmRights())
-        .setChangeType(getChangeType(item))
         .build();
-  }
-
-  private AnnotationChangeType getChangeType(AnnotationItem item) {
-    // TODO: handle deletions
-    return item.getCreated().isAfter(lastUpdateRun)
-        ? AnnotationChangeType.NEWLY_CREATED
-        : AnnotationChangeType.UPDATED;
   }
 }

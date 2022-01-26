@@ -111,6 +111,6 @@ public class EDMToFulltextConverter {
    */
   private static String getFulltextResourceId(String fulltextResourceUri, String itemID) {
     return StringUtils.substringAfter(
-        fulltextResourceUri, WebConstants.BASE_FULLTEXT_URL + itemID + WebConstants.URL_SEPARATOR);
+        fulltextResourceUri, WebConstants.BASE_FULLTEXT_URL + itemID + "/");
   }
 }

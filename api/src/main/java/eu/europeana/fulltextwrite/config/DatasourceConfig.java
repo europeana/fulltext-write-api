@@ -1,6 +1,5 @@
 package eu.europeana.fulltextwrite.config;
 
-import static eu.europeana.fulltext.util.MorphiaUtils.MAPPER_OPTIONS;
 import static eu.europeana.fulltextwrite.AppConstants.FULLTEXT_DATASTORE_BEAN;
 import static eu.europeana.fulltextwrite.AppConstants.SPRINGBATCH_DATASTORE_BEAN;
 
@@ -8,6 +7,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import dev.morphia.Datastore;
 import dev.morphia.Morphia;
+import dev.morphia.mapping.MapperOptions;
 import eu.europeana.batch.entity.PackageMapper;
 import eu.europeana.fulltext.entity.AnnoPage;
 import org.apache.logging.log4j.LogManager;
@@ -37,7 +37,8 @@ public class DatasourceConfig {
     logger.info("Configuring fulltext database: {}", fulltextDatabase);
 
     // use same Morphia settings as Fulltext API
-    Datastore datastore = Morphia.createDatastore(mongoClient, fulltextDatabase, MAPPER_OPTIONS);
+    Datastore datastore =
+        Morphia.createDatastore(mongoClient, fulltextDatabase, MapperOptions.legacy().build());
 
     // Indices aren't changeType unless Entity classes are explicitly mapped. Only required for
     // development, as indices already exist on production db
