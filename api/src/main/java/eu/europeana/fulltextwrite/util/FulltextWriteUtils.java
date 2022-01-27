@@ -142,4 +142,12 @@ public class FulltextWriteUtils {
   public static String[] getAnnoPageToString(List<? extends AnnoPage> annoPages) {
     return annoPages.stream().map(AnnoPage::toString).toArray(String[]::new);
   }
+
+  /** Gets the "{dsId}/{lcId}" part from an EntityId string */
+  public static String getRecordIdFromUri(String recordUri) {
+    // recordUri is always http://data.europeana.eu/item/{dsId}/{lcId}"
+    String[] parts = recordUri.split("/");
+
+    return "/" + parts[parts.length - 2] + "/" + parts[parts.length - 1];
+  }
 }

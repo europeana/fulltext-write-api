@@ -20,7 +20,14 @@ public class AnnotationsApiRestService {
 
   public AnnotationsApiRestService(AppSettings settings) {
     this.wskey = settings.getAnnotationsApiKey();
-    this.webClient = WebClient.builder().baseUrl(settings.getAnnotationsApiUrl()).build();
+    this.webClient =
+        WebClient.builder()
+            // used for logging Netty requests / responses.
+            //            .clientConnector(new
+            // ReactorClientHttpConnector(HttpClient.create().wiretap(HttpClient.class.getName(),
+            // LogLevel.DEBUG, AdvancedByteBufFormat.TEXTUAL)))
+            .baseUrl(settings.getAnnotationsApiUrl())
+            .build();
   }
 
   public List<AnnotationItem> getAllItems(int page, int pageSize) {
@@ -31,9 +38,9 @@ public class AnnotationsApiRestService {
                 uriBuilder ->
                     uriBuilder
                         .path("/annotation/search")
-                        .queryParam("wskey", wskey)
                         .queryParam("query", "motivation:subtitling")
-                        .queryParam("sort", "changeType")
+                        .queryParam("wskey", wskey)
+                        .queryParam("sort", "created")
                         .queryParam("sortOrder", "desc")
                         .queryParam("page", page)
                         .queryParam("pageSize", pageSize)

@@ -9,6 +9,7 @@ import eu.europeana.fulltextwrite.model.SubtitleType;
 import eu.europeana.fulltextwrite.model.external.AnnotationItem;
 import eu.europeana.fulltextwrite.service.AnnotationService;
 import eu.europeana.fulltextwrite.service.SubtitleHandlerService;
+import eu.europeana.fulltextwrite.util.FulltextWriteUtils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -32,7 +33,9 @@ public class AnnotationProcessor implements ItemProcessor<AnnotationItem, AnnoPa
   @Override
   public AnnoPage process(@NonNull AnnotationItem item) throws Exception {
     AnnotationPreview annotationPreview = createAnnotationPreview(item);
-    return annotationService.getAnnoPage(annotationPreview);
+    AnnoPage annoPage = annotationService.getAnnoPage(annotationPreview);
+
+    return annoPage;
   }
 
   private AnnotationPreview createAnnotationPreview(AnnotationItem item)
@@ -51,7 +54,10 @@ public class AnnotationProcessor implements ItemProcessor<AnnotationItem, AnnoPa
             new ByteArrayInputStream(item.getBody().getValue().getBytes(StandardCharsets.UTF_8)),
             subtitleType);
 
-    return new AnnotationPreview.Builder(item.getTarget().getScope(), subtitleType, subtitleItems)
+    return new AnnotationPreview.Builder(
+            FulltextWriteUtils.getRecordIdFromUri(item.getTarget().getScope()),
+            subtitleType,
+            subtitleItems)
         .setMedia(item.getTarget().getSource())
         .setLanguage(item.getBody().getLanguage())
         .setRights(item.getBody().getEdmRights())

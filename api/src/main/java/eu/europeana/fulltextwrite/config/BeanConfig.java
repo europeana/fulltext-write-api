@@ -35,7 +35,7 @@ public class BeanConfig {
   @Bean
   public MongoBatchConfigurer mongoBatchConfigurer(
       @Qualifier(SPRINGBATCH_DATASTORE_BEAN) Datastore datastore) {
-    // launch all Spring Batch jobs within the Spring Scheduling thread
+
     return new MongoBatchConfigurer(datastore, new SyncTaskExecutor());
   }
 }

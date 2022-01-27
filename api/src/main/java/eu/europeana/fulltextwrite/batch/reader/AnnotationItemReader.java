@@ -11,8 +11,8 @@ public class AnnotationItemReader extends AbstractPaginatedDataItemReader<Annota
   private final AnnotationsApiRestService annotationsRestService;
 
   public AnnotationItemReader(AnnotationsApiRestService annotationsRestService, int pageSize) {
-    this.annotationsRestService = annotationsRestService;
     setPageSize(pageSize);
+    this.annotationsRestService = annotationsRestService;
     // Non-restartable, as we expect this to run in multi-threaded steps.
     // see: https://stackoverflow.com/a/20002493
     setSaveState(false);
@@ -24,11 +24,8 @@ public class AnnotationItemReader extends AbstractPaginatedDataItemReader<Annota
 
   @Override
   protected Iterator<AnnotationItem> doPageRead() {
-    // number of items to skip when reading. pageSize is incremented in parent class every time
-    // this method is invoked
-    int start = page * pageSize;
-
-    List<AnnotationItem> searchResponse = annotationsRestService.getAllItems(start, pageSize);
+    // pageSize is incremented in parent class every time this method is invoked
+    List<AnnotationItem> searchResponse = annotationsRestService.getAllItems(page, pageSize);
     return searchResponse.iterator();
   }
 

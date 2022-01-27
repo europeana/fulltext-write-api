@@ -17,6 +17,8 @@ import eu.europeana.fulltextwrite.util.FulltextWriteUtils;
 import io.swagger.annotations.ApiOperation;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
@@ -71,7 +73,8 @@ public class FulltextWriteController extends BaseRest {
       @RequestParam(value = WebConstants.REQUEST_VALUE_RIGHTS) String rights,
       @RequestBody String content,
       HttpServletRequest request)
-      throws ApplicationAuthenticationException, EuropeanaApiException, IOException {
+      throws ApplicationAuthenticationException, EuropeanaApiException, IOException,
+          URISyntaxException {
 
     if (appSettings.isAuthEnabled()) {
       verifyWriteAccess(Operations.CREATE, request);
@@ -88,7 +91,7 @@ public class FulltextWriteController extends BaseRest {
       String rights,
       String content,
       HttpServletRequest request)
-      throws EuropeanaApiException, IOException {
+      throws EuropeanaApiException, IOException, URISyntaxException {
 
     /*
      * Check if there is a fulltext annotation page associated with the combination of DATASET_ID,
@@ -100,7 +103,7 @@ public class FulltextWriteController extends BaseRest {
       return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
           .location(
               UriComponentsBuilder.newInstance()
-                  .host(appSettings.getFulltextApiUrl())
+                  .uri(new URI(appSettings.getFulltextApiUrl()))
                   .path(FulltextWriteUtils.getAnnoPageUrl(annoPage))
                   .build()
                   .toUri())

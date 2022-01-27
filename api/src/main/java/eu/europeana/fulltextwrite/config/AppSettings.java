@@ -57,6 +57,15 @@ public class AppSettings {
   @Value("${batch.step.executor.queueSize: 5}")
   private int batchQueueSize;
 
+  @Value("${batch.step.throttleLimit: 5}")
+  private int annoSyncThrottleLimit;
+
+  @Value("${batch.scheduling.annoSync.initialDelaySeconds}")
+  private int annoSyncInitialDelay;
+
+  @Value("${batch.scheduling.annoSync.intervalSeconds}")
+  private int annoSyncInterval;
+
   public boolean isAuthEnabled() {
     return authEnabled;
   }
@@ -115,5 +124,17 @@ public class AppSettings {
 
   public int getBatchQueueSize() {
     return batchQueueSize;
+  }
+
+  public int getAnnoSyncInitialDelay() {
+    return annoSyncInitialDelay;
+  }
+
+  public int getAnnoSyncInterval() {
+    return annoSyncInterval;
+  }
+
+  public int getAnnoSyncThrottleLimit() {
+    return annoSyncThrottleLimit;
   }
 }

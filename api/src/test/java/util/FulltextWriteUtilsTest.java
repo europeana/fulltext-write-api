@@ -19,4 +19,12 @@ class FulltextWriteUtilsTest {
     String recordId = "/08604/FDE2205EEE384218A8D986E5138F9691";
     assertEquals("FDE2205EEE384218A8D986E5138F9691", FulltextWriteUtils.getLocalId(recordId));
   }
+
+  @Test
+  void shouldGetRecordIdFromUri() {
+    String recordUri = "http://data.europeana.eu/item/08604/EAAE870171E24F05A64CE364D750631A";
+    assertEquals(
+        "/08604/EAAE870171E24F05A64CE364D750631A",
+        FulltextWriteUtils.getRecordIdFromUri(recordUri));
+  }
 }
