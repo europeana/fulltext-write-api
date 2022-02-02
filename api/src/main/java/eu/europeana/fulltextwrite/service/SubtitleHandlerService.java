@@ -43,7 +43,7 @@ public class SubtitleHandlerService {
     String annotationPageURI = FulltextWriteUtils.getAnnotationPageURI(preview.getRecordId());
     String fullTextResourceURI =
         FulltextWriteUtils.getFullTextResourceURI(
-            preview.getRecordId(), FulltextWriteUtils.toID(preview.getRecordId()));
+            preview.getRecordId(), FulltextWriteUtils.generateHash(preview.getRecordId()));
 
     FulltextPackage page = new FulltextPackage(annotationPageURI, null);
 

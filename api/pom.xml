@@ -101,6 +101,14 @@
       <version>${morphia.version}</version>
     </dependency>
 
+    <!-- Used for hash generation -->
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>1.15</version>
+    </dependency>
+
+
     <dependency>
       <groupId>org.mongodb</groupId>
       <artifactId>mongo-java-driver</artifactId>

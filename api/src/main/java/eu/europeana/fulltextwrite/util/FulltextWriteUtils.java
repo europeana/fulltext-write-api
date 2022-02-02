@@ -7,16 +7,9 @@ import eu.europeana.fulltextwrite.model.edm.Reference;
 import eu.europeana.fulltextwrite.web.WebConstants;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.commons.io.Charsets;
-import org.apache.jena.ext.com.google.common.hash.HashFunction;
-import org.apache.jena.ext.com.google.common.hash.Hasher;
-import org.apache.jena.ext.com.google.common.hash.Hashing;
+import org.apache.commons.codec.digest.DigestUtils;
 
 public class FulltextWriteUtils {
-
-  // TODO switch to message digest or something that is not deprecated
-  private static HashFunction hfText = Hashing.md5();
-  private static HashFunction hfAnno = Hashing.md5();
 
   private FulltextWriteUtils() {
     // private constructor to hide implicit one
@@ -28,19 +21,20 @@ public class FulltextWriteUtils {
    * @param annotation
    * @return
    */
-  public static String toID(eu.europeana.fulltextwrite.model.edm.Annotation annotation) {
-    Hasher h = hfAnno.newHasher().putInt(annotation.getType().ordinal());
+  public static String generateHash(eu.europeana.fulltextwrite.model.edm.Annotation annotation) {
+    StringBuilder hashInput = new StringBuilder(annotation.getType().name());
     if (annotation.hasTargets()) {
       Reference mr = annotation.getTargets().get(0);
-      h.putString(mr.getURL(), Charsets.UTF_8);
+      hashInput.append(mr.getURL());
     }
-    String url = annotation.getTextReference().getURL();
-    h.putString(url, Charsets.UTF_8);
-    return h.hash().toString();
+
+    hashInput.append(annotation.getTextReference().getURL());
+
+    return DigestUtils.md5Hex(hashInput.toString()).toLowerCase();
   }
 
-  public static String toID(String itemID) {
-    return (hfText.newHasher().putString(itemID, Charsets.UTF_8).hash().toString());
+  public static String generateHash(String itemID) {
+    return DigestUtils.md5Hex(itemID).toLowerCase();
   }
 
   /**
@@ -91,18 +85,16 @@ public class FulltextWriteUtils {
    * @return
    */
   public static String getAnnoPageUrl(AnnoPage annoPage) {
-    String annoPageUrl =
-        "/"
-            + WebConstants.PRESENTATION
-            + "/"
-            + annoPage.getDsId()
-            + "/"
-            + annoPage.getLcId()
-            + "/"
-            + WebConstants.ANNOPAGE
-            + "/"
-            + annoPage.getPgId();
-    return annoPageUrl;
+    return "/"
+        + WebConstants.PRESENTATION
+        + "/"
+        + annoPage.getDsId()
+        + "/"
+        + annoPage.getLcId()
+        + "/"
+        + WebConstants.ANNOPAGE
+        + "/"
+        + annoPage.getPgId();
   }
 
   /**

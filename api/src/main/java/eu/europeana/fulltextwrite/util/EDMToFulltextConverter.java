@@ -1,5 +1,7 @@
 package eu.europeana.fulltextwrite.util;
 
+import static eu.europeana.fulltextwrite.util.FulltextWriteUtils.generateHash;
+
 import eu.europeana.fulltext.AnnotationType;
 import eu.europeana.fulltext.entity.Annotation;
 import eu.europeana.fulltext.entity.Resource;
@@ -14,7 +16,6 @@ import eu.europeana.fulltextwrite.model.edm.TimeBoundary;
 import eu.europeana.fulltextwrite.web.WebConstants;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,7 +46,8 @@ public class EDMToFulltextConverter {
     TranslationAnnoPage annoPage = new TranslationAnnoPage();
     annoPage.setDsId(datasetId);
     annoPage.setLcId(localId);
-    annoPage.setPgId("1");
+    // truncate md5 hash to reduce URL length
+    annoPage.setPgId(generateHash(request.getMedia()).substring(0, 5));
     annoPage.setTgtId(request.getMedia());
     annoPage.setLang(request.getLanguage());
     annoPage.setRes(resource);
@@ -76,11 +78,7 @@ public class EDMToFulltextConverter {
 
   private static List<Annotation> getAnnotations(FulltextPackage fulltext) {
     List<Annotation> annotationList = new ArrayList<>();
-    ListIterator<eu.europeana.fulltextwrite.model.edm.Annotation> annotationListIterator =
-        fulltext.listIterator();
-    while (annotationListIterator.hasNext()) {
-      eu.europeana.fulltextwrite.model.edm.Annotation sourceAnnotation =
-          annotationListIterator.next();
+    for (eu.europeana.fulltextwrite.model.edm.Annotation sourceAnnotation : fulltext) {
       TextBoundary boundary = (TextBoundary) sourceAnnotation.getTextReference();
       List<Target> targets = new ArrayList<>();
       if (sourceAnnotation.hasTargets()) {

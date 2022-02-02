@@ -28,7 +28,7 @@ public class Annotation {
     this.type = type;
     this.lang = lang;
     this.confidence = confidence;
-    this.annoId = (annoId != null ? annoId : FulltextWriteUtils.toID(this));
+    this.annoId = (annoId != null ? annoId : FulltextWriteUtils.generateHash(this));
   }
 
   public String getAnnoId() {
