@@ -57,7 +57,9 @@ public class AnnotationService {
 
   public void saveAnnoPage(TranslationAnnoPage annoPage) {
     annotationRepository.saveAnnoPage(annoPage);
-    logger.info("Saved annoPage to database - {} ", annoPage);
+    if (logger.isDebugEnabled()) {
+      logger.debug("Saved annoPage to database - {} ", annoPage);
+    }
   }
 
   public TranslationAnnoPage getAnnoPage(AnnotationPreview annotationPreview)
@@ -71,12 +73,14 @@ public class AnnotationService {
 
   public void saveAnnoPageBulk(List<? extends TranslationAnnoPage> annoPageList) {
     BulkWriteResult writeResult = annotationRepository.upsertBulk(annoPageList);
-    logger.info(
-        "Saved annoPages to db: matched={}, modified={}, inserted={}, annoPages={}",
-        writeResult.getMatchedCount(),
-        writeResult.getModifiedCount(),
-        writeResult.getInsertedCount(),
-        getAnnoPageToString(annoPageList));
+    if (logger.isDebugEnabled()) {
+      logger.debug(
+          "Saved annoPages to db: matched={}, modified={}, inserted={}, annoPages={}",
+          writeResult.getMatchedCount(),
+          writeResult.getModifiedCount(),
+          writeResult.getInsertedCount(),
+          getAnnoPageToString(annoPageList));
+    }
   }
 
   public long count() {

@@ -17,12 +17,8 @@ import eu.europeana.fulltextwrite.web.WebConstants;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class EDMToFulltextConverter {
-
-  private static final Logger logger = LogManager.getLogger(EDMToFulltextConverter.class);
 
   private EDMToFulltextConverter() {
     // private constructor to hide implicit one
@@ -61,7 +57,6 @@ public class EDMToFulltextConverter {
               + ". Annotations converted - "
               + annoPage.getAns().size());
     }
-    logger.info("Successfully converted EDM to AnnoPage for record {}", request.getRecordId());
     return annoPage;
   }
 

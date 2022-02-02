@@ -72,10 +72,12 @@ public class SubtitleHandlerService {
     // ADD the resource in Fulltext page
     resource.setValue(subtitleContext.end());
     page.setResource(resource);
-    logger.info(
-        "Successfully converted SRT to EDM for record {}. Processed Annotations - {}",
-        preview.getRecordId(),
-        page.size());
+    if (logger.isDebugEnabled()) {
+      logger.info(
+          "Successfully converted SRT to EDM for record {}. Processed Annotations - {}",
+          preview.getRecordId(),
+          page.size());
+    }
     return page;
   }
 

@@ -1,21 +1,23 @@
 package eu.europeana.fulltextwrite.batch;
 
-import static eu.europeana.fulltextwrite.AppConstants.ANNO_ITEM_READER;
 import static eu.europeana.fulltextwrite.AppConstants.ANNO_SYNC_TASK_EXECUTOR;
+import static eu.europeana.fulltextwrite.batch.BatchUtils.ANNO_SYNC_JOB;
 
 import eu.europeana.fulltext.entity.TranslationAnnoPage;
 import eu.europeana.fulltextwrite.batch.processor.AnnotationProcessor;
+import eu.europeana.fulltextwrite.batch.reader.ItemReaderConfig;
 import eu.europeana.fulltextwrite.batch.writer.AnnoPageWriter;
 import eu.europeana.fulltextwrite.config.AppSettings;
 import eu.europeana.fulltextwrite.model.external.AnnotationItem;
+import java.time.Instant;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.step.skip.SkipPolicy;
-import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
@@ -32,8 +34,10 @@ public class AnnotationSyncJobConfig {
 
   private final JobBuilderFactory jobBuilderFactory;
   private final StepBuilderFactory stepBuilderFactory;
+  private final JobExplorer jobExplorer;
 
-  private final ItemReader<AnnotationItem> annotationItemItemReader;
+  private final ItemReaderConfig itemReaderConfig;
+
   private final AnnotationProcessor annotationProcessor;
   private final AnnoPageWriter annoPageWriter;
 
@@ -46,24 +50,26 @@ public class AnnotationSyncJobConfig {
       AppSettings appSettings,
       JobBuilderFactory jobBuilderFactory,
       StepBuilderFactory stepBuilderFactory,
-      @Qualifier(ANNO_ITEM_READER) ItemReader<AnnotationItem> annotationItemItemReader,
+      JobExplorer jobExplorer,
+      ItemReaderConfig itemReaderConfig,
       AnnotationProcessor annotationProcessor,
       AnnoPageWriter annoPageWriter,
       @Qualifier(ANNO_SYNC_TASK_EXECUTOR) TaskExecutor annoSyncTaskExecutor) {
     this.appSettings = appSettings;
     this.jobBuilderFactory = jobBuilderFactory;
     this.stepBuilderFactory = stepBuilderFactory;
-    this.annotationItemItemReader = annotationItemItemReader;
+    this.jobExplorer = jobExplorer;
+    this.itemReaderConfig = itemReaderConfig;
     this.annotationProcessor = annotationProcessor;
     this.annoPageWriter = annoPageWriter;
     this.annoSyncTaskExecutor = annoSyncTaskExecutor;
   }
 
-  private Step syncAnnotationsStep() {
+  private Step syncAnnotationsStep(Instant from, Instant to) {
     return this.stepBuilderFactory
         .get("synchroniseAnnoStep")
         .<AnnotationItem, TranslationAnnoPage>chunk(appSettings.getAnnotationItemsPageSize())
-        .reader(annotationItemItemReader)
+        .reader(itemReaderConfig.createAnnotationReader(from, to))
         .processor(annotationProcessor)
         .writer(annoPageWriter)
         .faultTolerant()
@@ -85,9 +91,17 @@ public class AnnotationSyncJobConfig {
   }
 
   public Job syncAnnotations() {
+    Instant from = BatchUtils.getMostRecentSuccessfulStartTime(jobExplorer);
+    Instant to = Instant.now();
+
+    if (logger.isInfoEnabled()) {
+      String fromLogString = from == null ? "*" : from.toString();
+      logger.info(
+          "Starting annotation sync job. Fetching annotations from {} to {}", fromLogString, to);
+    }
     return this.jobBuilderFactory
-        .get("synchroniseAnnoJob")
-        .start(syncAnnotationsStep())
+        .get(ANNO_SYNC_JOB)
+        .start(syncAnnotationsStep(from, to))
         .next(deleteAnnotationsStep())
         .build();
   }

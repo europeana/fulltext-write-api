@@ -67,10 +67,6 @@ public class AnnotationRepository {
     return datastore.save(annoPage);
   }
 
-  public List<TranslationAnnoPage> saveAnnoPageBulk(List<TranslationAnnoPage> annoPageList) {
-    return datastore.save(annoPageList);
-  }
-
   public BulkWriteResult upsertBulk(List<? extends TranslationAnnoPage> annoPageList) {
     MongoCollection<TranslationAnnoPage> collection =
         datastore.getMapper().getCollection(TranslationAnnoPage.class);
@@ -99,10 +95,11 @@ public class AnnotationRepository {
                       annoPage.getDsId(),
                       LOCAL_ID,
                       annoPage.getLcId(),
+                      LANGUAGE,
+                      annoPage.getLang(),
                       PAGE_ID,
                       annoPage.getPgId())),
               new Document("$set", updateDoc),
-              // set "created" and updateType if this is a new document,
               UPSERT_OPTS));
     }
 

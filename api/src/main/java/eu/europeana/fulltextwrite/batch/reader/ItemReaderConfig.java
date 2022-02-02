@@ -1,13 +1,11 @@
 package eu.europeana.fulltextwrite.batch.reader;
 
-import static eu.europeana.fulltextwrite.AppConstants.ANNO_ITEM_READER;
-
 import eu.europeana.fulltextwrite.config.AppSettings;
 import eu.europeana.fulltextwrite.model.external.AnnotationItem;
 import eu.europeana.fulltextwrite.service.AnnotationsApiRestService;
+import java.time.Instant;
 import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.item.support.SynchronizedItemStreamReader;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
@@ -21,11 +19,11 @@ public class ItemReaderConfig {
     this.appSettings = appSettings;
   }
 
-  @Bean(name = ANNO_ITEM_READER)
-  public SynchronizedItemStreamReader<AnnotationItem> annotationReader() {
+  public SynchronizedItemStreamReader<AnnotationItem> createAnnotationReader(
+      Instant from, Instant to) {
     AnnotationItemReader reader =
         new AnnotationItemReader(
-            annotationsApiRestService, appSettings.getAnnotationItemsPageSize());
+            annotationsApiRestService, appSettings.getAnnotationItemsPageSize(), from, to);
     return threadSafeReader(reader);
   }
 
