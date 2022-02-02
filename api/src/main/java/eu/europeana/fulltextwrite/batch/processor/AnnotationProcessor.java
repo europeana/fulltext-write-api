@@ -1,7 +1,7 @@
 package eu.europeana.fulltextwrite.batch.processor;
 
 import com.dotsub.converter.model.SubtitleItem;
-import eu.europeana.fulltext.entity.AnnoPage;
+import eu.europeana.fulltext.entity.TranslationAnnoPage;
 import eu.europeana.fulltextwrite.exception.InvalidFormatException;
 import eu.europeana.fulltextwrite.exception.SubtitleParsingException;
 import eu.europeana.fulltextwrite.model.AnnotationPreview;
@@ -19,7 +19,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AnnotationProcessor implements ItemProcessor<AnnotationItem, AnnoPage> {
+public class AnnotationProcessor implements ItemProcessor<AnnotationItem, TranslationAnnoPage> {
 
   private final SubtitleHandlerService subtitleHandlerService;
   private final AnnotationService annotationService;
@@ -31,11 +31,9 @@ public class AnnotationProcessor implements ItemProcessor<AnnotationItem, AnnoPa
   }
 
   @Override
-  public AnnoPage process(@NonNull AnnotationItem item) throws Exception {
+  public TranslationAnnoPage process(@NonNull AnnotationItem item) throws Exception {
     AnnotationPreview annotationPreview = createAnnotationPreview(item);
-    AnnoPage annoPage = annotationService.getAnnoPage(annotationPreview);
-
-    return annoPage;
+    return annotationService.getAnnoPage(annotationPreview);
   }
 
   private AnnotationPreview createAnnotationPreview(AnnotationItem item)

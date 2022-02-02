@@ -19,7 +19,7 @@ import dev.morphia.Datastore;
 import dev.morphia.UpdateOptions;
 import dev.morphia.aggregation.experimental.Aggregation;
 import dev.morphia.aggregation.experimental.stages.Projection;
-import eu.europeana.fulltext.entity.AnnoPage;
+import eu.europeana.fulltext.entity.TranslationAnnoPage;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,10 +41,11 @@ public class AnnotationRepository {
     this.datastore = datastore;
   }
 
-  public AnnoPage getAnnoPageByTargetId(String datasetId, String localId, String targetId) {
-    Aggregation<AnnoPage> query =
+  public TranslationAnnoPage getAnnoPageByTargetId(
+      String datasetId, String localId, String targetId) {
+    Aggregation<TranslationAnnoPage> query =
         datastore
-            .aggregate(AnnoPage.class)
+            .aggregate(TranslationAnnoPage.class)
             .match(eq(DATASET_ID, datasetId), eq(LOCAL_ID, localId), eq(TARGET_ID, targetId))
             .project(
                 Projection.of()
@@ -53,31 +54,32 @@ public class AnnotationRepository {
                     .include(PAGE_ID)
                     .include(TARGET_ID));
 
-    return query.execute(AnnoPage.class).tryNext();
+    return query.execute(TranslationAnnoPage.class).tryNext();
   }
 
   /**
-   * Saves an AnnoPage to the database
+   * Saves an TranslationAnnoPage to the database
    *
-   * @param annoPage AnnoPage object to save
-   * @return the saved AnnoPage document
+   * @param annoPage TranslationAnnoPage object to save
+   * @return the saved TranslationAnnoPage document
    */
-  public AnnoPage saveAnnoPage(AnnoPage annoPage) {
+  public TranslationAnnoPage saveAnnoPage(TranslationAnnoPage annoPage) {
     return datastore.save(annoPage);
   }
 
-  public List<AnnoPage> saveAnnoPageBulk(List<AnnoPage> annoPageList) {
+  public List<TranslationAnnoPage> saveAnnoPageBulk(List<TranslationAnnoPage> annoPageList) {
     return datastore.save(annoPageList);
   }
 
-  public BulkWriteResult upsertBulk(List<? extends AnnoPage> annoPageList) {
-    MongoCollection<AnnoPage> collection = datastore.getMapper().getCollection(AnnoPage.class);
+  public BulkWriteResult upsertBulk(List<? extends TranslationAnnoPage> annoPageList) {
+    MongoCollection<TranslationAnnoPage> collection =
+        datastore.getMapper().getCollection(TranslationAnnoPage.class);
 
-    List<WriteModel<AnnoPage>> updates = new ArrayList<>();
+    List<WriteModel<TranslationAnnoPage>> updates = new ArrayList<>();
 
     Instant now = Instant.now();
 
-    for (AnnoPage annoPage : annoPageList) {
+    for (TranslationAnnoPage annoPage : annoPageList) {
       Document updateDoc =
           new Document(DATASET_ID, annoPage.getDsId())
               .append(LOCAL_ID, annoPage.getLcId())
@@ -109,10 +111,10 @@ public class AnnotationRepository {
 
   /** Only for tests */
   public void dropCollection() {
-    datastore.getMapper().getCollection(AnnoPage.class).drop();
+    datastore.getMapper().getCollection(TranslationAnnoPage.class).drop();
   }
 
   public long count() {
-    return datastore.getMapper().getCollection(AnnoPage.class).countDocuments();
+    return datastore.getMapper().getCollection(TranslationAnnoPage.class).countDocuments();
   }
 }

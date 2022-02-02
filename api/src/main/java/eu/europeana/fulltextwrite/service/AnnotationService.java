@@ -6,6 +6,7 @@ import static eu.europeana.fulltextwrite.util.FulltextWriteUtils.getLocalId;
 
 import com.mongodb.bulk.BulkWriteResult;
 import eu.europeana.fulltext.entity.AnnoPage;
+import eu.europeana.fulltext.entity.TranslationAnnoPage;
 import eu.europeana.fulltextwrite.exception.FTWriteConversionException;
 import eu.europeana.fulltextwrite.model.AnnotationPreview;
 import eu.europeana.fulltextwrite.model.edm.FulltextPackage;
@@ -41,10 +42,10 @@ public class AnnotationService {
    * @return
    * @throws FTWriteConversionException
    */
-  public AnnoPage createAndSaveAnnoPage(AnnotationPreview annotationPreview)
+  public TranslationAnnoPage createAndSaveAnnoPage(AnnotationPreview annotationPreview)
       throws FTWriteConversionException {
 
-    AnnoPage annoPage = getAnnoPage(annotationPreview);
+    TranslationAnnoPage annoPage = getAnnoPage(annotationPreview);
 
     // TODO will save a proper record later as a part of EA-2827
     // Keep in mind to store Resource as well and based on originallanguege - AnnoPage or
@@ -54,12 +55,12 @@ public class AnnotationService {
     return annotationRepository.saveAnnoPage(annoPage);
   }
 
-  public void saveAnnoPage(AnnoPage annoPage) {
+  public void saveAnnoPage(TranslationAnnoPage annoPage) {
     annotationRepository.saveAnnoPage(annoPage);
     logger.info("Saved annoPage to database - {} ", annoPage);
   }
 
-  public AnnoPage getAnnoPage(AnnotationPreview annotationPreview)
+  public TranslationAnnoPage getAnnoPage(AnnotationPreview annotationPreview)
       throws FTWriteConversionException {
     FulltextPackage fulltext = subtitleHandlerService.convert(annotationPreview);
     // Conversion for testing
@@ -68,7 +69,7 @@ public class AnnotationService {
         getDsId(recordId), getLocalId(recordId), annotationPreview, fulltext);
   }
 
-  public void saveAnnoPageBulk(List<? extends AnnoPage> annoPageList) {
+  public void saveAnnoPageBulk(List<? extends TranslationAnnoPage> annoPageList) {
     BulkWriteResult writeResult = annotationRepository.upsertBulk(annoPageList);
     logger.info(
         "Saved annoPages to db: matched={}, modified={}, inserted={}, annoPages={}",

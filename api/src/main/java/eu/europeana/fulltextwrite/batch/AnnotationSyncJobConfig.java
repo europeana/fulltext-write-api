@@ -3,7 +3,7 @@ package eu.europeana.fulltextwrite.batch;
 import static eu.europeana.fulltextwrite.AppConstants.ANNO_ITEM_READER;
 import static eu.europeana.fulltextwrite.AppConstants.ANNO_SYNC_TASK_EXECUTOR;
 
-import eu.europeana.fulltext.entity.AnnoPage;
+import eu.europeana.fulltext.entity.TranslationAnnoPage;
 import eu.europeana.fulltextwrite.batch.processor.AnnotationProcessor;
 import eu.europeana.fulltextwrite.batch.writer.AnnoPageWriter;
 import eu.europeana.fulltextwrite.config.AppSettings;
@@ -62,7 +62,7 @@ public class AnnotationSyncJobConfig {
   private Step syncAnnotationsStep() {
     return this.stepBuilderFactory
         .get("synchroniseAnnoStep")
-        .<AnnotationItem, AnnoPage>chunk(appSettings.getAnnotationItemsPageSize())
+        .<AnnotationItem, TranslationAnnoPage>chunk(appSettings.getAnnotationItemsPageSize())
         .reader(annotationItemItemReader)
         .processor(annotationProcessor)
         .writer(annoPageWriter)

@@ -1,10 +1,10 @@
 package eu.europeana.fulltextwrite.util;
 
 import eu.europeana.fulltext.AnnotationType;
-import eu.europeana.fulltext.entity.AnnoPage;
 import eu.europeana.fulltext.entity.Annotation;
 import eu.europeana.fulltext.entity.Resource;
 import eu.europeana.fulltext.entity.Target;
+import eu.europeana.fulltext.entity.TranslationAnnoPage;
 import eu.europeana.fulltextwrite.exception.FTWriteConversionException;
 import eu.europeana.fulltextwrite.model.AnnotationPreview;
 import eu.europeana.fulltextwrite.model.edm.FullTextResource;
@@ -37,13 +37,18 @@ public class EDMToFulltextConverter {
    * @return
    * @throws FTWriteConversionException
    */
-  public static AnnoPage getAnnoPage(
+  public static TranslationAnnoPage getAnnoPage(
       String datasetId, String localId, AnnotationPreview request, FulltextPackage fulltext)
       throws FTWriteConversionException {
     Resource resource = getResource(fulltext.getResource(), request, datasetId, localId);
-    // TODO not sure how to calculate the pgID
-    AnnoPage annoPage =
-        new AnnoPage(datasetId, localId, "1", request.getMedia(), request.getLanguage(), resource);
+
+    TranslationAnnoPage annoPage = new TranslationAnnoPage();
+    annoPage.setDsId(datasetId);
+    annoPage.setLcId(localId);
+    annoPage.setPgId("1");
+    annoPage.setTgtId(request.getMedia());
+    annoPage.setLang(request.getLanguage());
+    annoPage.setRes(resource);
     annoPage.setAns(getAnnotations(fulltext));
     // fail-safe check
     if (annoPage.getAns().size() != fulltext.size()) {
