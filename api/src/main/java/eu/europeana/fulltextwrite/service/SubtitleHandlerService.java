@@ -11,6 +11,7 @@ import com.dotsub.converter.importer.impl.WebVttImportHandler;
 import com.dotsub.converter.model.SubtitleItem;
 import eu.europeana.fulltext.AnnotationType;
 import eu.europeana.fulltextwrite.exception.InvalidFormatException;
+import eu.europeana.fulltextwrite.exception.SubtitleParsingException;
 import eu.europeana.fulltextwrite.model.AnnotationPreview;
 import eu.europeana.fulltextwrite.model.SubtitleType;
 import eu.europeana.fulltextwrite.model.edm.Annotation;
@@ -87,7 +88,7 @@ public class SubtitleHandlerService {
 
   /** parses the text to Subtitle Item */
   public List<SubtitleItem> parseSubtitle(InputStream text, SubtitleType subtitleType)
-      throws InvalidFormatException, IOException {
+      throws InvalidFormatException, SubtitleParsingException {
     SubtitleImportHandler subtitleImportHandler = subtitleHandlerMapping.get(subtitleType);
     if (subtitleImportHandler == null) {
       throw new InvalidFormatException("Format not supported : " + subtitleType.getMimeType());
@@ -98,6 +99,8 @@ public class SubtitleHandlerService {
       throw new InvalidFormatException(
           "Please provide proper format!! File does not match the expected format - "
               + subtitleType.getMimeType());
+    } catch (IOException e) {
+      throw new SubtitleParsingException(e.getMessage());
     }
   }
 }

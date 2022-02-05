@@ -1,7 +1,5 @@
 package eu.europeana.fulltextwrite.util;
 
-import static eu.europeana.fulltextwrite.util.FulltextWriteUtils.generateHash;
-
 import eu.europeana.fulltext.AnnotationType;
 import eu.europeana.fulltext.entity.Annotation;
 import eu.europeana.fulltext.entity.Resource;
@@ -42,12 +40,12 @@ public class EDMToFulltextConverter {
     TranslationAnnoPage annoPage = new TranslationAnnoPage();
     annoPage.setDsId(datasetId);
     annoPage.setLcId(localId);
-    // truncate md5 hash to reduce URL length
-    annoPage.setPgId(generateHash(request.getMedia()).substring(0, 5));
+    annoPage.setPgId(FulltextWriteUtils.derivePageId(request.getMedia()));
     annoPage.setTgtId(request.getMedia());
     annoPage.setLang(request.getLanguage());
     annoPage.setRes(resource);
     annoPage.setAns(getAnnotations(fulltext));
+    annoPage.setSource(request.getSource());
     // fail-safe check
     if (annoPage.getAns().size() != fulltext.size()) {
       throw new FTWriteConversionException(

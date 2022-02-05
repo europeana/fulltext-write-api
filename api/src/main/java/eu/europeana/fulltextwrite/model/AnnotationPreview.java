@@ -6,6 +6,7 @@ import java.util.List;
 
 public class AnnotationPreview {
 
+  private final String source;
   private final String recordId;
   private final String media;
   private final String language;
@@ -15,6 +16,7 @@ public class AnnotationPreview {
   private List<SubtitleItem> subtitleItems;
 
   private AnnotationPreview(
+      String source,
       String recordId,
       String media,
       String language,
@@ -22,6 +24,7 @@ public class AnnotationPreview {
       boolean originalLang,
       SubtitleType subtitleType,
       List<SubtitleItem> subtitleItems) {
+    this.source = source;
     this.recordId = recordId;
     this.media = media;
     this.language = language;
@@ -59,7 +62,12 @@ public class AnnotationPreview {
     return subtitleItems;
   }
 
+  public String getSource() {
+    return source;
+  }
+
   public static class Builder {
+    private String source;
     private String recordId;
     private String media;
     private String language;
@@ -99,9 +107,14 @@ public class AnnotationPreview {
       return this;
     }
 
+    public Builder setSource(String source) {
+      this.source = source;
+      return this;
+    }
+
     public AnnotationPreview build() {
       return new AnnotationPreview(
-          recordId, media, language, rights, originalLang, subtitleType, subtitleItems);
+          source, recordId, media, language, rights, originalLang, subtitleType, subtitleItems);
     }
   }
 }

@@ -44,7 +44,7 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
     TranslationAnnoPage annoPage2 =
         mapper.readValue(loadFile(ANNOPAGE_VIMEO_208310501_JSON), TranslationAnnoPage.class);
 
-    service.saveAnnoPageBulk(List.of(annoPage1, annoPage2));
+    service.upsertAnnoPage(List.of(annoPage1, annoPage2));
 
     assertEquals(2, service.count());
   }
@@ -72,7 +72,7 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
         mapper.readValue(loadFile(ANNOPAGE_VIMEO_208310501_JSON), TranslationAnnoPage.class);
 
     // try saving new annoPage (annoPage2) together with existing annoPage
-    service.saveAnnoPageBulk(List.of(annoPage2, annoPage1Copy));
+    service.upsertAnnoPage(List.of(annoPage2, annoPage1Copy));
     assertEquals(2, service.count());
   }
 

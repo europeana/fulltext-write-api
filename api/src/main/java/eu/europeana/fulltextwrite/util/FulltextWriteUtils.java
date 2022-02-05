@@ -7,6 +7,8 @@ import eu.europeana.fulltextwrite.model.edm.Reference;
 import eu.europeana.fulltextwrite.web.WebConstants;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import org.apache.commons.codec.digest.DigestUtils;
 
 public class FulltextWriteUtils {
@@ -14,6 +16,18 @@ public class FulltextWriteUtils {
   private FulltextWriteUtils() {
     // private constructor to hide implicit one
   }
+
+  private static final Predicate<String> ANNOTATION_ID_PATTERN =
+      Pattern.compile("https?://(.*)(\\.eanadev.org|europeana.eu)/annotation/\\d+")
+          .asMatchPredicate();
+
+  /**
+   * Regex used for validating annotation ids. '%s' will be replaced by allowed domains (via
+   * String.format()) when compiling the Pattern.
+   */
+  public static final String ANNOTATION_ID_REGEX = "https?://" + "%s" + "/annotation/\\d+";
+
+  private static final Pattern ANNOTATION_ID_SUFFIX_PATTERN = Pattern.compile("/annotation/\\d+$");
 
   /**
    * Generates Annotation ID
@@ -78,26 +92,6 @@ public class FulltextWriteUtils {
   }
 
   /**
-   * Returns the Existing AnnoPage Url
-   *
-   * @param fulltextBaseUrl
-   * @param annoPage
-   * @return
-   */
-  public static String getAnnoPageUrl(AnnoPage annoPage) {
-    return "/"
-        + WebConstants.PRESENTATION
-        + "/"
-        + annoPage.getDsId()
-        + "/"
-        + annoPage.getLcId()
-        + "/"
-        + WebConstants.ANNOPAGE
-        + "/"
-        + annoPage.getPgId();
-  }
-
-  /**
    * Creates a dummy shell record
    *
    * @param datasetId
@@ -141,5 +135,28 @@ public class FulltextWriteUtils {
     String[] parts = recordUri.split("/");
 
     return "/" + parts[parts.length - 2] + "/" + parts[parts.length - 1];
+  }
+
+  public static boolean isValidAnnotationId(String uri, Predicate<String> pattern) {
+    return pattern.test(uri);
+  }
+
+  public static String getDeletedEndpoint(String annotationId) {
+    // annotation id has form at http://<host>/annotation/18503
+    // deletions endpoint is http://<host>/annotations/deleted
+    return ANNOTATION_ID_SUFFIX_PATTERN.matcher(annotationId).replaceFirst("/annotations/deleted");
+  }
+
+  /**
+   * Derives PageID from a media URL.
+   *
+   * @param mediaUrl media (target) url
+   * @return MD5 hash of media url truncated to the first 5 characters
+   */
+  public static String derivePageId(String mediaUrl) {
+    // truncate md5 hash to reduce URL length.
+    // Should not be changed as this method can be used in place of fetching the pageId from the
+    // database.
+    return generateHash(mediaUrl).substring(0, 5);
   }
 }

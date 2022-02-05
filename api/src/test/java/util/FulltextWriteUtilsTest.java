@@ -27,4 +27,13 @@ class FulltextWriteUtilsTest {
         "/08604/EAAE870171E24F05A64CE364D750631A",
         FulltextWriteUtils.getRecordIdFromUri(recordUri));
   }
+
+  @Test
+  void shouldDeriveDeletionsEndpointFromAnnotationId() {
+    String annotationId = "http://annotation-api-acceptance.eanadev.org/annotation/56951";
+
+    assertEquals(
+        "http://annotation-api-acceptance.eanadev.org/annotations/deleted",
+        FulltextWriteUtils.getDeletedEndpoint(annotationId));
+  }
 }

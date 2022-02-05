@@ -1,8 +1,8 @@
 package eu.europeana.fulltextwrite;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 import org.apache.commons.io.IOUtils;
 
 public class IntegrationTestUtils {
@@ -17,11 +17,25 @@ public class IntegrationTestUtils {
       "/annopages/annopage-repozytorium-9927.json";
   public static final String ANNOPAGE_VIMEO_208310501_JSON =
       "/annopages/annopage-vimeo-208310501.json";
+  public static final String ANNOPAGE_FILMPORTAL_SALEM06_JSON =
+      "/annopages/annopage-filmportal-salem06.json";
 
   public static String loadFile(String resourcePath) throws IOException {
-    return IOUtils.toString(
-            Objects.requireNonNull(IntegrationTestUtils.class.getResourceAsStream(resourcePath)),
-            StandardCharsets.UTF_8)
-        .replace("\n", "");
+    InputStream resourceAsStream = IntegrationTestUtils.class.getResourceAsStream(resourcePath);
+
+    if (resourceAsStream == null) {
+      throw new IOException("Input file could not be loaded");
+    }
+
+    return IOUtils.toString(resourceAsStream, StandardCharsets.UTF_8).replace("\n", "");
+  }
+
+  /**
+   * Method for loading JSON files, and ensuring annotationId matches mockServer url. Replaces
+   * "http://test-annotation-host" in JSON
+   */
+  public static String loadFileAndReplaceServerUrl(String resourcePath, String replacementString)
+      throws IOException {
+    return loadFile(resourcePath).replaceFirst("http://test-annotation-host", replacementString);
   }
 }

@@ -25,7 +25,6 @@ import org.springframework.web.context.WebApplicationContext;
 class FulltextWriteControllerIT extends BaseIntegrationTest {
   @Autowired private WebApplicationContext webApplicationContext;
   @Autowired private AnnotationRepository repository;
-  public static final String BASE_SERVICE_URL = "/presentation";
 
   private MockMvc mockMvc;
 
@@ -41,7 +40,7 @@ class FulltextWriteControllerIT extends BaseIntegrationTest {
 
     mockMvc
         .perform(
-            post(BASE_SERVICE_URL + "/08604/FDE2205EEE384218A8D986E5138F9691/annopage")
+            post("/presentation/08604/FDE2205EEE384218A8D986E5138F9691/annopage")
                 .param(WebConstants.REQUEST_VALUE_MEDIA, "https://www.filmportal.de/node/1197365")
                 .param(WebConstants.REQUEST_VALUE_LANG, "nl")
                 .param(
@@ -61,7 +60,7 @@ class FulltextWriteControllerIT extends BaseIntegrationTest {
 
     mockMvc
         .perform(
-            put(BASE_SERVICE_URL + "/9200338/BibliographicResource_3000094252504/annopage/1")
+            put("/presentation/9200338/BibliographicResource_3000094252504/annopage/1")
                 .param(WebConstants.REQUEST_VALUE_LANG, "en")
                 .accept(MediaType.APPLICATION_JSON)
                 .content(requestBody))
@@ -72,7 +71,7 @@ class FulltextWriteControllerIT extends BaseIntegrationTest {
   void fulltextRemovalShouldBeSuccessful() throws Exception {
     mockMvc
         .perform(
-            delete(BASE_SERVICE_URL + "/9200338/BibliographicResource_3000094252504/annopage/1")
+            delete("/presentation/9200338/BibliographicResource_3000094252504/annopage/1")
                 .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isNoContent());
   }

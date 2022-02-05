@@ -8,6 +8,7 @@ import static eu.europeana.fulltext.util.MorphiaUtils.Fields.LOCAL_ID;
 import static eu.europeana.fulltext.util.MorphiaUtils.Fields.MODIFIED;
 import static eu.europeana.fulltext.util.MorphiaUtils.Fields.PAGE_ID;
 import static eu.europeana.fulltext.util.MorphiaUtils.Fields.RESOURCE;
+import static eu.europeana.fulltext.util.MorphiaUtils.Fields.SOURCE;
 import static eu.europeana.fulltext.util.MorphiaUtils.Fields.TARGET_ID;
 import static eu.europeana.fulltextwrite.AppConstants.FULLTEXT_DATASTORE_BEAN;
 
@@ -18,8 +19,9 @@ import com.mongodb.client.model.WriteModel;
 import dev.morphia.Datastore;
 import dev.morphia.UpdateOptions;
 import dev.morphia.aggregation.experimental.Aggregation;
-import dev.morphia.aggregation.experimental.stages.Projection;
+import dev.morphia.query.FindOptions;
 import eu.europeana.fulltext.entity.TranslationAnnoPage;
+import eu.europeana.fulltext.util.MorphiaUtils;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,18 +43,33 @@ public class AnnotationRepository {
     this.datastore = datastore;
   }
 
-  public TranslationAnnoPage getAnnoPageByTargetId(
-      String datasetId, String localId, String targetId) {
+  public boolean annoPageExists(String datasetId, String localId, String targetId, String lang) {
+    TranslationAnnoPage annoPage =
+        datastore
+            .find(TranslationAnnoPage.class)
+            .filter(
+                eq(DATASET_ID, datasetId),
+                eq(LOCAL_ID, localId),
+                eq(LANGUAGE, lang),
+                eq(TARGET_ID, targetId))
+            // Since document contents aren't important for this query, just fetch _id
+            .iterator(new FindOptions().limit(1).projection().include("_id"))
+            .tryNext();
+
+    return annoPage != null;
+  }
+
+  public TranslationAnnoPage getAnnoPage(
+      String datasetId, String localId, String targetId, String lang, String pgId) {
     Aggregation<TranslationAnnoPage> query =
         datastore
             .aggregate(TranslationAnnoPage.class)
-            .match(eq(DATASET_ID, datasetId), eq(LOCAL_ID, localId), eq(TARGET_ID, targetId))
-            .project(
-                Projection.of()
-                    .include(DATASET_ID)
-                    .include(LOCAL_ID)
-                    .include(PAGE_ID)
-                    .include(TARGET_ID));
+            .match(
+                eq(DATASET_ID, datasetId),
+                eq(LOCAL_ID, localId),
+                eq(TARGET_ID, targetId),
+                eq(LANGUAGE, lang),
+                eq(PAGE_ID, pgId));
 
     return query.execute(TranslationAnnoPage.class).tryNext();
   }
@@ -84,6 +101,7 @@ public class AnnotationRepository {
               .append(ANNOTATIONS, annoPage.getAns())
               .append(MODIFIED, now)
               .append(LANGUAGE, annoPage.getLang())
+              .append(SOURCE, annoPage.getSource())
               .append(RESOURCE, annoPage.getRes());
       // className discriminator no longer used
 
@@ -113,5 +131,13 @@ public class AnnotationRepository {
 
   public long count() {
     return datastore.getMapper().getCollection(TranslationAnnoPage.class).countDocuments();
+  }
+
+  public long deleteAnnoPagesWithSource(String source) {
+    return datastore
+        .find(TranslationAnnoPage.class)
+        .filter(eq(SOURCE, source))
+        .delete(MorphiaUtils.MULTI_DELETE_OPTS)
+        .getDeletedCount();
   }
 }

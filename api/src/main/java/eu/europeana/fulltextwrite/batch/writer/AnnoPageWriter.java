@@ -18,6 +18,6 @@ public class AnnoPageWriter implements ItemWriter<TranslationAnnoPage> {
 
   @Override
   public void write(@NonNull List<? extends TranslationAnnoPage> annoPages) throws Exception {
-    annotationService.saveAnnoPageBulk(annoPages);
+    annotationService.upsertAnnoPage(annoPages);
   }
 }
