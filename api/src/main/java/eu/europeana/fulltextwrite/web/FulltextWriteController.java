@@ -12,11 +12,13 @@ import eu.europeana.api.commons.web.model.vocabulary.Operations;
 import eu.europeana.fulltext.entity.AnnoPage;
 import eu.europeana.fulltext.entity.TranslationAnnoPage;
 import eu.europeana.fulltextwrite.config.AppSettings;
-import eu.europeana.fulltextwrite.exception.AnnotationSyncException;
 import eu.europeana.fulltextwrite.exception.InvalidUriException;
 import eu.europeana.fulltextwrite.exception.MediaTypeNotSupportedException;
+import eu.europeana.fulltextwrite.exception.UnsupportedAnnotationException;
 import eu.europeana.fulltextwrite.model.AnnotationPreview;
 import eu.europeana.fulltextwrite.model.AnnotationPreview.Builder;
+import eu.europeana.fulltextwrite.model.DeleteAnnoSyncResponse;
+import eu.europeana.fulltextwrite.model.DeleteAnnoSyncResponse.Status;
 import eu.europeana.fulltextwrite.model.SubtitleType;
 import eu.europeana.fulltextwrite.model.external.AnnotationItem;
 import eu.europeana.fulltextwrite.service.AnnotationService;
@@ -95,35 +97,38 @@ public class FulltextWriteController extends BaseRest {
     }
 
     Optional<AnnotationItem> itemOptional = annotationsApiRestService.retrieveAnnotation(source);
-    if (itemOptional.isPresent()) {
-      AnnotationItem item = itemOptional.get();
-      // motivation must be subtitling
+    if (itemOptional.isEmpty()) {
+      // annotationItem not present, meaning 410 returned by Annotation API - so it has been deleted
 
-      if (!MOTIVATION_SUBTITLING.equals(item.getMotivation())) {
-        throw new AnnotationSyncException(
-            "Annotation not supported for sync. Only subtitles are supported");
-      }
+      TranslationAnnoPage annoPage = annotationService.getShellAnnoPageBySource(source);
+      long count = annotationService.deleteAnnoPagesWithSource(source);
 
-      AnnotationPreview annotationPreview =
-          annotationService.createAnnotationPreview(itemOptional.get());
-      TranslationAnnoPage annoPage = annotationService.createAnnoPage(annotationPreview);
+      DeleteAnnoSyncResponse response =
+          new DeleteAnnoSyncResponse(
+              source, count > 0 ? Status.DELETED.getValue() : Status.NOOP.getValue(), annoPage);
 
-      // Morphia creates a new _id value if none exists, so we can't directly call save() – as this
-      // could be an update.
-      annotationService.upsertAnnoPage(List.of(annoPage));
-
-      return generateResponse(request, serializeJsonLd(annoPage), HttpStatus.ACCEPTED);
+      return generateResponse(request, serializeResponse(response), HttpStatus.ACCEPTED);
     }
 
-    // annotationItem not present, meaning 404 returned by Annotation API - so check if it's been
-    // deleted
-    if (annotationsApiRestService.isAnnotationDeleted(source)
-        && annotationService.deleteAnnoPagesWithSource(source) > 0) {
-      return ResponseEntity.accepted().body("Annotation and Fulltext documents deleted");
+    AnnotationItem item = itemOptional.get();
+    // motivation must be subtitling
+
+    if (!MOTIVATION_SUBTITLING.equals(item.getMotivation())) {
+      throw new UnsupportedAnnotationException(
+          String.format(
+              "Annotation motivation '%s' not supported for sync. Only subtitles are supported",
+              item.getMotivation()));
     }
 
-    // Fulltext doc doesn't exist for deleted annotation
-    throw new AnnotationSyncException("Annotation could not be synced");
+    AnnotationPreview annotationPreview =
+        annotationService.createAnnotationPreview(itemOptional.get());
+    TranslationAnnoPage annoPage = annotationService.createAnnoPage(annotationPreview);
+
+    // Morphia creates a new _id value if none exists, so we can't directly call save() – as this
+    // could be an update.
+    annotationService.upsertAnnoPage(List.of(annoPage));
+
+    return generateResponse(request, serializeJsonLd(annoPage), HttpStatus.ACCEPTED);
   }
 
   @ApiOperation(

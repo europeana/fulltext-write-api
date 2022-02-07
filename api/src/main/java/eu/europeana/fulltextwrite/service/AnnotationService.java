@@ -131,6 +131,15 @@ public class AnnotationService {
   }
 
   public long deleteAnnoPagesWithSource(String source) {
-    return annotationRepository.deleteAnnoPagesWithSource(source);
+    long count = annotationRepository.deleteAnnoPagesWithSource(source);
+    if (logger.isDebugEnabled()) {
+      logger.debug("Deleted {} AnnoPages for source {}", count, source);
+    }
+
+    return count;
+  }
+
+  public TranslationAnnoPage getShellAnnoPageBySource(String source) {
+    return annotationRepository.getAnnoPageWithSource(source, false);
   }
 }

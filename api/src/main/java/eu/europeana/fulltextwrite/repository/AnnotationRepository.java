@@ -140,4 +140,19 @@ public class AnnotationRepository {
         .delete(MorphiaUtils.MULTI_DELETE_OPTS)
         .getDeletedCount();
   }
+
+  public TranslationAnnoPage getAnnoPageWithSource(String source, boolean fetchFullDoc) {
+    FindOptions findOptions = new FindOptions().limit(1);
+
+    if (!fetchFullDoc) {
+      findOptions =
+          findOptions.projection().include(DATASET_ID, LOCAL_ID, PAGE_ID, TARGET_ID, SOURCE);
+    }
+
+    return datastore
+        .find(TranslationAnnoPage.class)
+        .filter(eq(SOURCE, source))
+        .iterator(findOptions)
+        .tryNext();
+  }
 }

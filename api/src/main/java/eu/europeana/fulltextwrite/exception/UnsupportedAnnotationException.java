@@ -3,15 +3,20 @@ package eu.europeana.fulltextwrite.exception;
 import eu.europeana.api.commons.error.EuropeanaApiException;
 import org.springframework.http.HttpStatus;
 
-/** Exception thrown when errors occur during AnnoSync */
-public class AnnotationSyncException extends EuropeanaApiException {
+/** Exception thrown trying to sync an unsupported annotation */
+public class UnsupportedAnnotationException extends EuropeanaApiException {
 
-  public AnnotationSyncException(String msg) {
+  public UnsupportedAnnotationException(String msg) {
     super(msg);
   }
 
   @Override
   public HttpStatus getResponseStatus() {
     return HttpStatus.UNPROCESSABLE_ENTITY;
+  }
+
+  @Override
+  public boolean doLogStacktrace() {
+    return false;
   }
 }

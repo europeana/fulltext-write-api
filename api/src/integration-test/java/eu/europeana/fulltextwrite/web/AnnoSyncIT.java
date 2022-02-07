@@ -16,6 +16,7 @@ import eu.europeana.fulltextwrite.util.FulltextWriteUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -43,7 +44,7 @@ class AnnoSyncIT extends BaseIntegrationTest {
   @Autowired AnnotationService annoPageService;
   private MockMvc mockMvc;
 
-  private static final List<String> MOCK_DELETED_ANNOTATIONS = new ArrayList<>();
+  private static final List<String> DELETED_ANNOTATION_IDS = new ArrayList<>();
 
   @BeforeAll
   static void beforeAll() throws IOException {
@@ -55,7 +56,7 @@ class AnnoSyncIT extends BaseIntegrationTest {
     mockAnnotationApi.setDispatcher(
         new Dispatcher() {
           // create mapper here, as we can't access the Autowired one from static method
-          ObjectMapper dispatcherMapper = new ObjectMapper();
+          final ObjectMapper dispatcherMapper = new ObjectMapper();
 
           @Override
           public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
@@ -64,8 +65,12 @@ class AnnoSyncIT extends BaseIntegrationTest {
               String path = request.getPath();
               // can't use String.equals() as path contains wskey param
               if (path.startsWith("/annotations/deleted")) {
+                List<String> response =
+                    DELETED_ANNOTATION_IDS.stream()
+                        .map(id -> serverBaseUrl + "/annotation/" + id)
+                        .collect(Collectors.toList());
                 return new MockResponse()
-                    .setBody(dispatcherMapper.writeValueAsString(MOCK_DELETED_ANNOTATIONS))
+                    .setBody(dispatcherMapper.writeValueAsString(response))
                     .setResponseCode(200)
                     .setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
               }
@@ -78,6 +83,11 @@ class AnnoSyncIT extends BaseIntegrationTest {
 
               // path is /annotation/<annotationId>
               String annotationId = pathSegments.get(1);
+
+              // 410 returned for  deleted Annotations
+              if (DELETED_ANNOTATION_IDS.contains(annotationId)) {
+                return new MockResponse().setResponseCode(410);
+              }
 
               try {
                 String body =
@@ -124,10 +134,11 @@ class AnnoSyncIT extends BaseIntegrationTest {
 
   @Test
   void annoSyncShouldDeleteRemovedAnnoPage() throws Exception {
-    String deletedAnnotation = serverBaseUrl + "/annotation/53707";
+    String annId = "53707";
+    String deletedAnnotation = serverBaseUrl + "/annotation/" + annId;
 
     // mark annotation as deleted
-    MOCK_DELETED_ANNOTATIONS.add(deletedAnnotation);
+    DELETED_ANNOTATION_IDS.add(annId);
 
     // create AnnoPage in DB (source property in JSON matches url in deleted annotations list)
     TranslationAnnoPage annoPage =
@@ -141,6 +152,7 @@ class AnnoSyncIT extends BaseIntegrationTest {
             post("/fulltext/annosync")
                 .param(WebConstants.REQUEST_VALUE_SOURCE, deletedAnnotation)
                 .accept(MediaType.APPLICATION_JSON))
-        .andExpect(status().isAccepted());
+        .andExpect(status().isAccepted())
+        .andExpect(jsonPath("$.status", is("deleted")));
   }
 }

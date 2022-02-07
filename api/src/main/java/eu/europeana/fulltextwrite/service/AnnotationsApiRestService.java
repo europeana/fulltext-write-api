@@ -1,6 +1,7 @@
 package eu.europeana.fulltextwrite.service;
 
 import eu.europeana.fulltextwrite.config.AppSettings;
+import eu.europeana.fulltextwrite.exception.AnnotationGoneException;
 import eu.europeana.fulltextwrite.exception.AnnotationNotFoundException;
 import eu.europeana.fulltextwrite.model.external.AnnotationItem;
 import eu.europeana.fulltextwrite.model.external.AnnotationSearchResponse;
@@ -106,10 +107,14 @@ public class AnnotationsApiRestService {
               .uri(URI.create(uri))
               .accept(MediaType.APPLICATION_JSON)
               .retrieve()
+              // throw custom exception so we can handle 410 and 404 responses separately
+
+              .onStatus(
+                  HttpStatus.GONE::equals,
+                  response -> response.bodyToMono(String.class).map(AnnotationGoneException::new))
               .onStatus(
                   HttpStatus.NOT_FOUND::equals,
                   response ->
-                      // throw custom exception so we can handle 404 responses separately
                       response.bodyToMono(String.class).map(AnnotationNotFoundException::new))
               .bodyToMono(AnnotationItem.class)
               .block());
@@ -121,7 +126,7 @@ public class AnnotationsApiRestService {
       Throwable t = Exceptions.unwrap(e);
 
       // return empty optional if annotation doesn't exist on Annotation API
-      if (t instanceof AnnotationNotFoundException) {
+      if (t instanceof AnnotationGoneException) {
         return Optional.empty();
       }
 
