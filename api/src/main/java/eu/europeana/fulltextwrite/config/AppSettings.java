@@ -54,6 +54,9 @@ public class AppSettings {
   @Value("${batch.executor.corePool: 5}")
   private int batchCorePoolSize;
 
+  @Value("${batch.step.skipLimit: 10}")
+  private int batchSkipLimit;
+
   @Value("${batch.executor.maxPool: 10}")
   private int batchMaxPoolSize;
 
@@ -143,5 +146,9 @@ public class AppSettings {
 
   public String getAnnotationIdHostsPattern() {
     return annotationIdHostsPattern;
+  }
+
+  public int getBatchSkipLimit() {
+    return batchSkipLimit;
   }
 }

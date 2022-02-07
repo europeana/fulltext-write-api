@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -101,7 +102,7 @@ public class FulltextWriteController extends BaseRest {
       // annotationItem not present, meaning 410 returned by Annotation API - so it has been deleted
 
       TranslationAnnoPage annoPage = annotationService.getShellAnnoPageBySource(source);
-      long count = annotationService.deleteAnnoPagesWithSource(source);
+      long count = annotationService.deleteAnnoPagesWithSources(Collections.singletonList(source));
 
       DeleteAnnoSyncResponse response =
           new DeleteAnnoSyncResponse(

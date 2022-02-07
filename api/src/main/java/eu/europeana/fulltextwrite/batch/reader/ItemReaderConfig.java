@@ -27,6 +27,14 @@ public class ItemReaderConfig {
     return threadSafeReader(reader);
   }
 
+  public SynchronizedItemStreamReader<String> createDeletedAnnotationReader(
+      Instant from, Instant to) {
+    DeletedAnnotationsReader reader =
+        new DeletedAnnotationsReader(
+            annotationsApiRestService, appSettings.getAnnotationItemsPageSize(), from, to);
+    return threadSafeReader(reader);
+  }
+
   /** Makes ItemReader thread-safe */
   private <T> SynchronizedItemStreamReader<T> threadSafeReader(ItemStreamReader<T> reader) {
     final SynchronizedItemStreamReader<T> synchronizedItemStreamReader =

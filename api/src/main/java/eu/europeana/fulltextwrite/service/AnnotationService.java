@@ -130,10 +130,10 @@ public class AnnotationService {
     annotationRepository.dropCollection();
   }
 
-  public long deleteAnnoPagesWithSource(String source) {
-    long count = annotationRepository.deleteAnnoPagesWithSource(source);
+  public long deleteAnnoPagesWithSources(List<? extends String> sources) {
+    long count = annotationRepository.deleteAnnoPagesWithSources(sources);
     if (logger.isDebugEnabled()) {
-      logger.debug("Deleted {} AnnoPages for source {}", count, source);
+      logger.debug("Deleted {} AnnoPages for sources {}", count, sources);
     }
 
     return count;

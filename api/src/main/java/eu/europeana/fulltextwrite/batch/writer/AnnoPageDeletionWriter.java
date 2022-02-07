@@ -1,6 +1,5 @@
 package eu.europeana.fulltextwrite.batch.writer;
 
-import eu.europeana.fulltext.entity.TranslationAnnoPage;
 import eu.europeana.fulltextwrite.service.AnnotationService;
 import java.util.List;
 import org.springframework.batch.item.ItemWriter;
@@ -8,16 +7,16 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AnnoPageWriter implements ItemWriter<TranslationAnnoPage> {
+public class AnnoPageDeletionWriter implements ItemWriter<String> {
 
   private final AnnotationService annotationService;
 
-  public AnnoPageWriter(AnnotationService annotationService) {
+  public AnnoPageDeletionWriter(AnnotationService annotationService) {
     this.annotationService = annotationService;
   }
 
   @Override
-  public void write(@NonNull List<? extends TranslationAnnoPage> annoPages) throws Exception {
-    annotationService.upsertAnnoPage(annoPages);
+  public void write(@NonNull List<? extends String> annoPages) throws Exception {
+    annotationService.deleteAnnoPagesWithSources(annoPages);
   }
 }

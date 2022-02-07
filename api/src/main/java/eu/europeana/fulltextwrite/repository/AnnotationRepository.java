@@ -1,6 +1,7 @@
 package eu.europeana.fulltextwrite.repository;
 
 import static dev.morphia.query.experimental.filters.Filters.eq;
+import static dev.morphia.query.experimental.filters.Filters.in;
 import static eu.europeana.fulltext.util.MorphiaUtils.Fields.ANNOTATIONS;
 import static eu.europeana.fulltext.util.MorphiaUtils.Fields.DATASET_ID;
 import static eu.europeana.fulltext.util.MorphiaUtils.Fields.LANGUAGE;
@@ -133,10 +134,10 @@ public class AnnotationRepository {
     return datastore.getMapper().getCollection(TranslationAnnoPage.class).countDocuments();
   }
 
-  public long deleteAnnoPagesWithSource(String source) {
+  public long deleteAnnoPagesWithSources(List<? extends String> sources) {
     return datastore
         .find(TranslationAnnoPage.class)
-        .filter(eq(SOURCE, source))
+        .filter(in(SOURCE, sources))
         .delete(MorphiaUtils.MULTI_DELETE_OPTS)
         .getDeletedCount();
   }
