@@ -7,6 +7,7 @@ import eu.europeana.fulltextwrite.model.edm.TimeBoundary;
 import eu.europeana.fulltextwrite.web.WebConstants;
 import java.util.List;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public class FulltextWriteUtils {
 
@@ -101,14 +102,20 @@ public class FulltextWriteUtils {
 
   /**
    * Returns the Existing Translation AnnoPage Url
-   * lang parameter is sent to fetch the translation annopage
+   * lang parameter is required to fetch the translation annopage
    *
    * @param annoPage
    * @return
    */
   public static String getTranslationAnnoPageUrl(AnnoPage annoPage) {
-    return getAnnoPageUrl(annoPage)
-            + "?" +WebConstants.REQUEST_VALUE_LANG + "=" +annoPage.getLang();
+    if (StringUtils.isNotEmpty(annoPage.getLang())) {
+      return getAnnoPageUrl(annoPage)
+          + "?"
+          + WebConstants.REQUEST_VALUE_LANG
+          + "="
+          + annoPage.getLang();
+    }
+    return getAnnoPageUrl(annoPage);
   }
 
   public static String[] getAnnoPageToString(List<? extends AnnoPage> annoPages) {
