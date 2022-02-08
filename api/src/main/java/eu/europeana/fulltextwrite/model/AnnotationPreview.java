@@ -11,7 +11,6 @@ public class AnnotationPreview {
   private final String media;
   private final String language;
   private final String rights;
-  private final String source;
   private final boolean originalLang;
   private final SubtitleType subtitleType;
   private List<SubtitleItem> subtitleItems;
@@ -22,7 +21,6 @@ public class AnnotationPreview {
       String media,
       String language,
       String rights,
-      String source,
       boolean originalLang,
       SubtitleType subtitleType,
       List<SubtitleItem> subtitleItems) {
@@ -31,7 +29,6 @@ public class AnnotationPreview {
     this.media = media;
     this.language = language;
     this.rights = rights;
-    this.source = source;
     this.originalLang = originalLang;
     this.subtitleType = subtitleType;
     this.subtitleItems = subtitleItems;
@@ -75,7 +72,6 @@ public class AnnotationPreview {
     private String media;
     private String language;
     private String rights;
-    private String source;
     private boolean originalLang;
     private SubtitleType subtitleType;
     private final List<SubtitleItem> subtitleItems;

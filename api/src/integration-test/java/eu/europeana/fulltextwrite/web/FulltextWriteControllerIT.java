@@ -35,7 +35,6 @@ class FulltextWriteControllerIT extends BaseIntegrationTest {
 
   public static final String BASE_SERVICE_URL = "/presentation";
 
-
   private MockMvc mockMvc;
 
   @BeforeEach
@@ -50,18 +49,23 @@ class FulltextWriteControllerIT extends BaseIntegrationTest {
   void fulltextSubmissionShouldBeSuccessful() throws Exception {
     String requestBody = IntegrationTestUtils.loadFile(SUBTITLE_VTT);
 
-    String result = mockMvc
-        .perform(
-            post("/presentation/08604/FDE2205EEE384218A8D986E5138F9691/annopage")
-                .param(WebConstants.REQUEST_VALUE_MEDIA, "https://www.filmportal.de/node/1197365")
-                .param(WebConstants.REQUEST_VALUE_LANG, "nl")
-                .param(
-                    WebConstants.REQUEST_VALUE_RIGHTS,
-                    "http://creativecommons.org/licenses/by-sa/4.0/")
-                .accept(MediaType.APPLICATION_JSON)
-                .contentType(CONTENT_TYPE_VTT)
-                .content(requestBody))
-        .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+    String result =
+        mockMvc
+            .perform(
+                post("/presentation/08604/FDE2205EEE384218A8D986E5138F9691/annopage")
+                    .param(
+                        WebConstants.REQUEST_VALUE_MEDIA, "https://www.filmportal.de/node/1197365")
+                    .param(WebConstants.REQUEST_VALUE_LANG, "nl")
+                    .param(
+                        WebConstants.REQUEST_VALUE_RIGHTS,
+                        "http://creativecommons.org/licenses/by-sa/4.0/")
+                    .accept(MediaType.APPLICATION_JSON)
+                    .contentType(CONTENT_TYPE_VTT)
+                    .content(requestBody))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
 
     Assert.assertNotNull(result);
   }
@@ -70,18 +74,24 @@ class FulltextWriteControllerIT extends BaseIntegrationTest {
   void fulltextUpdateShouldBeSuccessfulWithoutBody() throws Exception {
     // add the anno page and resource first
     TranslationAnnoPage annoPage =
-            mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
+        mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
     annotationRepository.saveAnnoPage(annoPage);
     resourceRepository.saveResource(annoPage.getRes());
 
-    String result = mockMvc
-        .perform(
-            put(FulltextWriteUtils.getAnnoPageUrl(annoPage))
-                .param(WebConstants.REQUEST_VALUE_LANG, annoPage.getLang())
-                .param(WebConstants.REQUEST_VALUE_RIGHTS, annoPage.getRes().getRights() + "updated")
-                .param(WebConstants.REQUEST_VALUE_SOURCE, "https:annotation/source/value")
-                .accept(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+    String result =
+        mockMvc
+            .perform(
+                put(FulltextWriteUtils.getAnnoPageUrl(annoPage))
+                    .param(WebConstants.REQUEST_VALUE_LANG, annoPage.getLang())
+                    .param(
+                        WebConstants.REQUEST_VALUE_RIGHTS,
+                        annoPage.getRes().getRights() + "updated")
+                    .param(WebConstants.REQUEST_VALUE_SOURCE, "https:annotation/source/value")
+                    .accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
 
     Assert.assertNotNull(result);
   }
@@ -89,26 +99,25 @@ class FulltextWriteControllerIT extends BaseIntegrationTest {
   @Test
   void fulltextUpdateAnnoPageDoesNotExist() throws Exception {
     mockMvc
-            .perform(
-                    put(BASE_SERVICE_URL + "/9200338/BibliographicResource_3000094252504/annopage/1")
-                            .param(WebConstants.REQUEST_VALUE_LANG,"es")
-                            .param(WebConstants.REQUEST_VALUE_RIGHTS, "rights_testing_update")
-                            .param(WebConstants.REQUEST_VALUE_SOURCE, "https:annotation/source/value")
-                            .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isNotFound());
+        .perform(
+            put(BASE_SERVICE_URL + "/9200338/BibliographicResource_3000094252504/annopage/1")
+                .param(WebConstants.REQUEST_VALUE_LANG, "es")
+                .param(WebConstants.REQUEST_VALUE_RIGHTS, "rights_testing_update")
+                .param(WebConstants.REQUEST_VALUE_SOURCE, "https:annotation/source/value")
+                .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound());
   }
 
   @Test
   void fulltextRemovalShouldBeSuccessfulWithoutLang() throws Exception {
     // add the anno page and resource first
     TranslationAnnoPage annoPage =
-            mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
+        mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
     annotationRepository.saveAnnoPage(annoPage);
     resourceRepository.saveResource(annoPage.getRes());
     mockMvc
         .perform(
-            delete(FulltextWriteUtils.getAnnoPageUrl(annoPage))
-                .accept(MediaType.APPLICATION_JSON))
+            delete(FulltextWriteUtils.getAnnoPageUrl(annoPage)).accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isNoContent());
   }
 
@@ -116,25 +125,24 @@ class FulltextWriteControllerIT extends BaseIntegrationTest {
   void fulltextRemovalShouldBeSuccessfulWithLang() throws Exception {
     // add the anno page and resource first
     TranslationAnnoPage annoPage =
-            mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
+        mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
     annotationRepository.saveAnnoPage(annoPage);
     resourceRepository.saveResource(annoPage.getRes());
     mockMvc
-            .perform(
-                    delete(FulltextWriteUtils.getAnnoPageUrl(annoPage))
-                            .param(WebConstants.REQUEST_VALUE_LANG,annoPage.getLang())
-                            .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isNoContent());
+        .perform(
+            delete(FulltextWriteUtils.getAnnoPageUrl(annoPage))
+                .param(WebConstants.REQUEST_VALUE_LANG, annoPage.getLang())
+                .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNoContent());
   }
-
 
   @Test
   void fulltextRemovalAnnopageDoesNotExist() throws Exception {
     mockMvc
-            .perform(
-                    delete(BASE_SERVICE_URL + "/9200338/BibliographicResource_3000094252504/annopage/1")
-                            .param(WebConstants.REQUEST_VALUE_LANG, "it")
-                            .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isNotFound());
+        .perform(
+            delete(BASE_SERVICE_URL + "/9200338/BibliographicResource_3000094252504/annopage/1")
+                .param(WebConstants.REQUEST_VALUE_LANG, "it")
+                .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound());
   }
 }

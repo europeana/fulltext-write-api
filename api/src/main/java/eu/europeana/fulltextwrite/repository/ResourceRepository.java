@@ -1,12 +1,12 @@
 package eu.europeana.fulltextwrite.repository;
 
+import static dev.morphia.query.experimental.filters.Filters.eq;
 import static eu.europeana.fulltext.util.MorphiaUtils.Fields.*;
 import static eu.europeana.fulltextwrite.AppConstants.FULLTEXT_DATASTORE_BEAN;
 
-import com.mongodb.client.result.DeleteResult;
 import dev.morphia.Datastore;
 import eu.europeana.fulltext.entity.TranslationResource;
-import org.bson.Document;
+import eu.europeana.fulltext.util.MorphiaUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
@@ -29,19 +29,20 @@ public class ResourceRepository {
     return datastore.save(resource);
   }
 
-  public DeleteResult deleteResources(String datasetId, String localId) {
+  public long deleteResources(String datasetId, String localId) {
     return datastore
-        .getDatabase()
-        .getCollection(TranslationResource.class.getSimpleName())
-        .deleteMany(new Document(DATASET_ID, datasetId).append(LOCAL_ID, localId));
+        .find(TranslationResource.class)
+        .filter(eq(DATASET_ID, datasetId), eq(LOCAL_ID, localId))
+        .delete(MorphiaUtils.MULTI_DELETE_OPTS)
+        .getDeletedCount();
   }
 
-  public DeleteResult deleteResource(String datasetId, String localId, String lang) {
+  public long deleteResource(String datasetId, String localId, String lang) {
     return datastore
-        .getDatabase()
-        .getCollection(TranslationResource.class.getSimpleName())
-        .deleteOne(
-            new Document(DATASET_ID, datasetId).append(LOCAL_ID, localId).append(LANGUAGE, lang));
+        .find(TranslationResource.class)
+        .filter(eq(DATASET_ID, datasetId), eq(LOCAL_ID, localId), eq(LANGUAGE, lang))
+        .delete()
+        .getDeletedCount();
   }
 
   public long count() {

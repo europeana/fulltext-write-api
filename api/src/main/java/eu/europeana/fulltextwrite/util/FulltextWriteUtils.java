@@ -115,8 +115,8 @@ public class FulltextWriteUtils {
   }
 
   /**
-   * Returns the Existing Translation AnnoPage Url
-   * lang parameter is required to fetch the translation annopage
+   * Returns the Existing Translation AnnoPage Url lang parameter is required to fetch the
+   * translation annopage
    *
    * @param annoPage
    * @return

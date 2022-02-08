@@ -81,16 +81,25 @@ public class AnnotationService {
     return annotationRepository.annoPageExists(datasetId, localId, targetId, lang);
   }
 
+  public TranslationAnnoPage getAnnoPageByPageIdLang(
+      String datasetId, String localId, String pgId, String lang) {
+    return annotationRepository.getAnnoPageByPageIdLang(datasetId, localId, pgId, lang);
+  }
+
+  public boolean existsTranslationByPageIdLang(
+      String datasetId, String localId, String pageId, String lang) {
+    return annotationRepository.existsTranslationByPageIdLang(datasetId, localId, pageId, lang);
+  }
+
   /**
    * Creates an AnnoPage from the AnnotationPreview object, saving it in the database
    *
    * @param annotationPreview
    * @return
-   * @throws FTWriteConversionException
    */
   public TranslationAnnoPage createAndSaveAnnoPage(AnnotationPreview annotationPreview)
       throws FTWriteConversionException {
-    TranslationAnnoPage annoPage = getAnnoPage(annotationPreview);
+    TranslationAnnoPage annoPage = createAnnoPage(annotationPreview);
     resourceRepository.saveResource(annoPage.getRes());
     return annotationRepository.saveAnnoPage(annoPage);
   }
@@ -133,9 +142,8 @@ public class AnnotationService {
   }
 
   public void deleteAnnoPages(String datasetId, String localId, String pageId) {
-    long resourceCount = resourceRepository.deleteResources(datasetId, localId).getDeletedCount();
-    long annoPageCount =
-        annotationRepository.deleteAnnoPages(datasetId, localId, pageId).getDeletedCount();
+    long resourceCount = resourceRepository.deleteResources(datasetId, localId);
+    long annoPageCount = annotationRepository.deleteAnnoPages(datasetId, localId, pageId);
     logger.info(
         "{} AnnoPage and {} Resource with datasetId={}, localId={}, pageId={} are deleted",
         annoPageCount,
@@ -159,19 +167,13 @@ public class AnnotationService {
       }
     } else { // process the subtitle list and update annotations in AnnoPage. Also, rights and value
       // in Resource
-      annoPageTobeUpdated = getAnnoPage(annotationPreview);
+      annoPageTobeUpdated = createAnnoPage(annotationPreview);
       if (StringUtils.isEmpty(annoPageTobeUpdated.getSource())
           && StringUtils.isNotEmpty(existingAnnoPage.getSource())) {
         annoPageTobeUpdated.setSource(existingAnnoPage.getSource());
       }
     }
     return annoPageTobeUpdated;
-  }
-
-  public TranslationAnnoPage getAnnoPage(AnnotationPreview annotationPreview)
-    if (logger.isDebugEnabled()) {
-      logger.debug("Saved annoPage to database - {} ", annoPage);
-    }
   }
 
   public TranslationAnnoPage createAnnoPage(AnnotationPreview annotationPreview)

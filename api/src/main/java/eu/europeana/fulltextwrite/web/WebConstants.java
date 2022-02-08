@@ -16,7 +16,6 @@ public class WebConstants {
   public static final String REQUEST_VALUE_RIGHTS = "rights";
   public static final String REQUEST_VALUE_SOURCE = "source";
   public static final String REQUEST_VALUE_DOC = "document";
-  public static final String REQUEST_VALUE_SOURCE = "source";
 
   public static final String MOTIVATION_SUBTITLING = "subtitling";
 

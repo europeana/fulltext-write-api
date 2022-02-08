@@ -2,13 +2,11 @@ package eu.europeana.fulltextwrite.exception;
 
 import eu.europeana.api.commons.error.EuropeanaApiException;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
  * An exception to demonstrate error handling with ResponseStatus annotation It's recommended that
  * all exceptions created in the API extends the EuropeanaApiException
  */
-@ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
 public class MediaTypeNotSupportedException extends EuropeanaApiException {
 
   /**
@@ -38,5 +36,10 @@ public class MediaTypeNotSupportedException extends EuropeanaApiException {
   @Override
   public boolean doLogStacktrace() {
     return false;
+  }
+
+  @Override
+  public HttpStatus getResponseStatus() {
+    return HttpStatus.UNSUPPORTED_MEDIA_TYPE;
   }
 }

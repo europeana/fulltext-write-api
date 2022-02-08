@@ -8,15 +8,15 @@ import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.WriteModel;
-import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import dev.morphia.Datastore;
 import dev.morphia.UpdateOptions;
 import dev.morphia.aggregation.experimental.Aggregation;
-import dev.morphia.aggregation.experimental.stages.Projection;
+import dev.morphia.query.FindOptions;
 import dev.morphia.query.experimental.filters.Filter;
 import eu.europeana.fulltext.entity.TranslationAnnoPage;
 import eu.europeana.fulltext.entity.TranslationResource;
+import eu.europeana.fulltext.util.MorphiaUtils;
 import eu.europeana.fulltextwrite.AppConstants;
 import java.time.Instant;
 import java.util.*;
@@ -39,19 +39,27 @@ public class AnnotationRepository {
   }
 
   public boolean annoPageExists(String datasetId, String localId, String targetId, String lang) {
-    TranslationAnnoPage annoPage =
-        datastore
+    return datastore
             .find(TranslationAnnoPage.class)
             .filter(
                 eq(DATASET_ID, datasetId),
                 eq(LOCAL_ID, localId),
                 eq(LANGUAGE, lang),
                 eq(TARGET_ID, targetId))
-            // Since document contents aren't important for this query, just fetch _id
-            .iterator(new FindOptions().limit(1).projection().include("_id"))
-            .tryNext();
+            .count()
+        > 0L;
+  }
 
-    return annoPage != null;
+  public boolean existsTranslationByPageIdLang(
+      String datasetId, String localId, String pageId, String lang) {
+    List<Filter> filter =
+        new ArrayList<>(
+            Arrays.asList(eq(DATASET_ID, datasetId), eq(LOCAL_ID, localId), eq(PAGE_ID, pageId)));
+    if (StringUtils.isNotEmpty(lang)) {
+      filter.add(eq(LANGUAGE, lang));
+    }
+    return datastore.find(TranslationAnnoPage.class).filter(filter.toArray(new Filter[0])).count()
+        > 0L;
   }
 
   public TranslationAnnoPage getAnnoPage(
@@ -73,18 +81,6 @@ public class AnnotationRepository {
       String datasetId, String localId, String pageId, String lang) {
     Document result = getAnnoPageAndResource(datasetId, localId, pageId, lang);
     return MongoUtils.processMongoDocument(result, datasetId, localId, pageId, lang);
-  }
-
-  public boolean existsTranslationByPageIdLang(
-      String datasetId, String localId, String pageId, String lang) {
-    List<Filter> filter =
-        new ArrayList<>(
-            Arrays.asList(eq(DATASET_ID, datasetId), eq(LOCAL_ID, localId), eq(PAGE_ID, pageId)));
-    if (StringUtils.isNotEmpty(lang)) {
-      filter.add(eq(LANGUAGE, lang));
-    }
-    return datastore.find(TranslationAnnoPage.class).filter(filter.toArray(new Filter[0])).count()
-        > 0L;
   }
 
   /**
@@ -193,23 +189,24 @@ public class AnnotationRepository {
     return collection.bulkWrite(updates);
   }
 
-  public DeleteResult deleteAnnoPages(String datasetId, String localId, String pageId) {
+  public long deleteAnnoPages(String datasetId, String localId, String pageId) {
     return datastore
-        .getDatabase()
-        .getCollection(TranslationAnnoPage.class.getSimpleName())
-        .deleteMany(
-            new Document(DATASET_ID, datasetId).append(LOCAL_ID, localId).append(PAGE_ID, pageId));
+        .find(TranslationAnnoPage.class)
+        .filter(eq(DATASET_ID, datasetId), eq(LOCAL_ID, localId), eq(PAGE_ID, pageId))
+        .delete(MorphiaUtils.MULTI_DELETE_OPTS)
+        .getDeletedCount();
   }
 
-  public DeleteResult deleteAnnoPage(String datasetId, String localId, String pageId, String lang) {
+  public long deleteAnnoPage(String datasetId, String localId, String pageId, String lang) {
     return datastore
-        .getDatabase()
-        .getCollection(TranslationAnnoPage.class.getSimpleName())
-        .deleteOne(
-            new Document(DATASET_ID, datasetId)
-                .append(LOCAL_ID, localId)
-                .append(PAGE_ID, pageId)
-                .append(LANGUAGE, lang));
+        .find(TranslationAnnoPage.class)
+        .filter(
+            eq(DATASET_ID, datasetId),
+            eq(LOCAL_ID, localId),
+            eq(PAGE_ID, pageId),
+            eq(LANGUAGE, lang))
+        .delete()
+        .getDeletedCount();
   }
 
   /** Only for tests */

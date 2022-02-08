@@ -12,11 +12,7 @@ import eu.europeana.api.commons.web.model.vocabulary.Operations;
 import eu.europeana.fulltext.entity.AnnoPage;
 import eu.europeana.fulltext.entity.TranslationAnnoPage;
 import eu.europeana.fulltextwrite.config.AppSettings;
-import eu.europeana.fulltextwrite.exception.AnnoPageDoesNotExistException;
-import eu.europeana.fulltextwrite.exception.FTWriteConversionException;
-import eu.europeana.fulltextwrite.exception.InvalidFormatException;
-import eu.europeana.fulltextwrite.exception.MediaTypeNotSupportedException;
-import eu.europeana.fulltextwrite.exception.UnsupportedAnnotationException;
+import eu.europeana.fulltextwrite.exception.*;
 import eu.europeana.fulltextwrite.model.AnnotationPreview;
 import eu.europeana.fulltextwrite.model.AnnotationPreview.Builder;
 import eu.europeana.fulltextwrite.model.DeleteAnnoSyncResponse;
@@ -175,33 +171,30 @@ public class FulltextWriteController extends BaseRest {
       String content,
       HttpServletRequest request)
       throws EuropeanaApiException, IOException, URISyntaxException {
-
     /*
      * Check if there is a fulltext annotation page associated with the combination of DATASET_ID,
      * LOCAL_ID and the media URL, if so then return a HTTP 301 with the URL of the Annotation Page
      */
-
     if (annotationService.annoPageExists(datasetId, localId, media, lang)) {
       // return 301 redirect
       return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
           .location(
               UriComponentsBuilder.newInstance()
                   .uri(new URI(appSettings.getFulltextApiUrl()))
-               .path(
+                  .path(
                       "/presentation/"
                           + datasetId
                           + "/"
                           + localId
                           + "/annopage/"
                           + FulltextWriteUtils.derivePageId(media))
-        .query(WebConstants.REQUEST_VALUE_LANG + "=" + annoPage.getLang())
+                  .query(WebConstants.REQUEST_VALUE_LANG + "=" + lang)
                   .build()
                   .toUri())
           .build();
     }
 
     SubtitleType type = SubtitleType.getValueByMimetype(request.getContentType());
-
     if (type == null) {
       throw new MediaTypeNotSupportedException(
           "The content type " + request.getContentType() + " is not supported");
@@ -251,7 +244,7 @@ public class FulltextWriteController extends BaseRest {
       String content,
       HttpServletRequest request)
       throws AnnoPageDoesNotExistException, MediaTypeNotSupportedException, IOException,
-          InvalidFormatException, FTWriteConversionException {
+          InvalidFormatException, FTWriteConversionException, SubtitleParsingException {
     /*
      * Check if there is a fulltext annotation page associated with the combination of DATASET_ID,
      * LOCAL_ID and the PAGE_ID and LANG, if not then return a HTTP 404
@@ -292,7 +285,7 @@ public class FulltextWriteController extends BaseRest {
 
   @ApiOperation(value = "Deletes the full-text associated to a media resource\n")
   @DeleteMapping(
-      value = "/{datasetId}/{localId}/annopage/{pageId}",
+      value = "/presentation/{datasetId}/{localId}/annopage/{pageId}",
       produces = {HttpHeaders.CONTENT_TYPE_JSONLD, MediaType.APPLICATION_JSON_VALUE})
   public ResponseEntity<String> deleteFulltext(
       @PathVariable(value = WebConstants.REQUEST_VALUE_DATASET_ID) String datasetId,
@@ -343,7 +336,7 @@ public class FulltextWriteController extends BaseRest {
       String media,
       String content,
       SubtitleType type)
-      throws IOException, InvalidFormatException {
+      throws InvalidFormatException, SubtitleParsingException {
     // process subtitles if content is not empty
     List<SubtitleItem> subtitleItems = new ArrayList<>();
     if (!StringUtils.isEmpty(content)) {

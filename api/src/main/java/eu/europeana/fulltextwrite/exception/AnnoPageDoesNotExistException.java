@@ -2,9 +2,7 @@ package eu.europeana.fulltextwrite.exception;
 
 import eu.europeana.api.commons.error.EuropeanaApiException;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(HttpStatus.NOT_FOUND)
 public class AnnoPageDoesNotExistException extends EuropeanaApiException {
 
   /**
@@ -34,5 +32,10 @@ public class AnnoPageDoesNotExistException extends EuropeanaApiException {
   @Override
   public boolean doLogStacktrace() {
     return false;
+  }
+
+  @Override
+  public HttpStatus getResponseStatus() {
+    return HttpStatus.NOT_FOUND;
   }
 }
