@@ -1,8 +1,6 @@
 package eu.europeana.fulltextwrite.service;
 
-import static eu.europeana.fulltextwrite.IntegrationTestUtils.ANNOPAGE_FILMPORTAL_1197365_JSON;
-import static eu.europeana.fulltextwrite.IntegrationTestUtils.ANNOPAGE_VIMEO_208310501_JSON;
-import static eu.europeana.fulltextwrite.IntegrationTestUtils.loadFile;
+import static eu.europeana.fulltextwrite.IntegrationTestUtils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,7 +8,14 @@ import eu.europeana.fulltext.entity.Annotation;
 import eu.europeana.fulltext.entity.Target;
 import eu.europeana.fulltext.entity.TranslationAnnoPage;
 import eu.europeana.fulltextwrite.BaseIntegrationTest;
+
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+
+import eu.europeana.fulltextwrite.exception.FTWriteConversionException;
+import eu.europeana.fulltextwrite.model.AnnotationPreview;
+import eu.europeana.fulltextwrite.util.FulltextWriteUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +38,7 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
         mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
     service.saveAnnoPage(annoPage);
     assertEquals(1, service.count());
+    assertEquals(1, service.countResource());
   }
 
   @Test
@@ -86,5 +92,79 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
     service.dropCollection();
 
     assertEquals(0, service.count());
+    assertEquals(0, service.countResource());
+
   }
+
+  @Test
+  void updateAnnoPageShouldBeSuccessful() throws IOException, FTWriteConversionException {
+    assertEquals(0, service.count());
+    assertEquals(0, service.countResource());
+
+    // add the anno page and resource
+    TranslationAnnoPage annoPage =
+            mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
+    service.saveAnnoPage(annoPage);
+    assertEquals(1, service.count());
+    assertEquals(1, service.countResource());
+
+    // now update
+    AnnotationPreview preview = new AnnotationPreview.Builder(FulltextWriteUtils.generateRecordId(annoPage.getDsId(),
+            annoPage.getLcId()), null, new ArrayList<>()).setLanguage(annoPage.getLang())
+            .setSource("https://annotation/source/value")
+            .setRights(annoPage.getRes().getRights() + "updated")
+            .setMedia(annoPage.getTgtId())
+            .setOriginalLang(false).build();
+
+    TranslationAnnoPage updatedAnnopage = service.updateAnnoPage(preview, annoPage);
+
+    // check
+    assertEquals(updatedAnnopage.getSource(), "https://annotation/source/value");
+    assertEquals(updatedAnnopage.getRes().getRights(), annoPage.getRes().getRights() + "updated");
+    assertEquals(annoPage.getAns().size(), updatedAnnopage.getAns().size());
+    assertEquals(annoPage.getLang(), updatedAnnopage.getLang());
+    assertEquals(1, service.count());
+    assertEquals(1, service.countResource());
+  }
+
+  @Test
+  void deleteAnnoPageWithLangSuccessful() throws IOException {
+
+    assertEquals(0, service.count());
+    assertEquals(0, service.countResource());
+
+    // add the anno page and resource
+    TranslationAnnoPage annoPage =
+            mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
+    service.saveAnnoPage(annoPage);
+    assertEquals(1, service.count());
+    assertEquals(1, service.countResource());
+
+    service.deleteAnnoPage(annoPage.getDsId(), annoPage.getLcId(), annoPage.getPgId(), annoPage.getLang());
+
+    assertEquals(0, service.count());
+    assertEquals(0, service.countResource());
+  }
+
+  @Test
+  void deleteAnnoPageWithoutLangSuccessful() throws IOException {
+
+    assertEquals(0, service.count());
+    assertEquals(0, service.countResource());
+
+    // add the anno page and resource with same dsId, lcId, pgId but different lang
+    TranslationAnnoPage annoPage =
+            mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
+    service.saveAnnoPage(annoPage);
+    annoPage = mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_EN_JSON), TranslationAnnoPage.class);
+    service.saveAnnoPage(annoPage);
+    assertEquals(2, service.count());
+    assertEquals(2, service.countResource());
+
+    service.deleteAnnoPages(annoPage.getDsId(), annoPage.getLcId(), annoPage.getPgId());
+
+    assertEquals(0, service.count());
+    assertEquals(0, service.countResource());
+  }
+
 }

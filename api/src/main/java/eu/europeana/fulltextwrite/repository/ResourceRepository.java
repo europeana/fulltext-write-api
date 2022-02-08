@@ -47,4 +47,9 @@ public class ResourceRepository {
   public long count() {
     return datastore.getMapper().getCollection(TranslationResource.class).countDocuments();
   }
+
+  /** Only for tests */
+  public void dropCollection() {
+    datastore.getMapper().getCollection(TranslationResource.class).drop();
+  }
 }

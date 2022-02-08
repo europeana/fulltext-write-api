@@ -173,7 +173,12 @@ public class AnnotationService {
     return annotationRepository.count();
   }
 
+  public long countResource() {
+    return resourceRepository.count();
+  }
+
   public void dropCollection() {
     annotationRepository.dropCollection();
+    resourceRepository.dropCollection();
   }
 }
