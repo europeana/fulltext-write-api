@@ -104,9 +104,15 @@ public class AnnotationService {
     return annotationRepository.saveAnnoPage(annoPage);
   }
 
+  /**
+   * Used only in test
+   * @param annoPage
+   */
   public void saveAnnoPage(TranslationAnnoPage annoPage) {
     annotationRepository.saveAnnoPage(annoPage);
-    resourceRepository.saveResource(annoPage.getRes());
+    if(annoPage.getRes() != null) {
+      resourceRepository.saveResource(annoPage.getRes());
+    }
     logger.info("Saved annoPage to database - {} ", annoPage);
   }
 
