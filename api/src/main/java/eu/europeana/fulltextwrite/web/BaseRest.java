@@ -44,4 +44,8 @@ public class BaseRest extends BaseRestController {
   protected String serializeJsonLd(AnnoPage annoPage) throws JsonProcessingException {
     return mapper.writeValueAsString(annoPageJsonldResourceBuilder.build(annoPage));
   }
+
+  protected <T> String serializeResponse(T responseObject) throws JsonProcessingException {
+    return mapper.writeValueAsString(responseObject);
+  }
 }

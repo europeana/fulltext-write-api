@@ -7,20 +7,27 @@ import eu.europeana.fulltextwrite.model.edm.Reference;
 import eu.europeana.fulltextwrite.web.WebConstants;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.commons.io.Charsets;
-import org.apache.jena.ext.com.google.common.hash.HashFunction;
-import org.apache.jena.ext.com.google.common.hash.Hasher;
-import org.apache.jena.ext.com.google.common.hash.Hashing;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import org.apache.commons.codec.digest.DigestUtils;
 
 public class FulltextWriteUtils {
-
-  // TODO switch to message digest or something that is not deprecated
-  private static HashFunction hfText = Hashing.md5();
-  private static HashFunction hfAnno = Hashing.md5();
 
   private FulltextWriteUtils() {
     // private constructor to hide implicit one
   }
+
+  private static final Predicate<String> ANNOTATION_ID_PATTERN =
+      Pattern.compile("https?://(.*)(\\.eanadev.org|europeana.eu)/annotation/\\d+")
+          .asMatchPredicate();
+
+  /**
+   * Regex used for validating annotation ids. '%s' will be replaced by allowed domains (via
+   * String.format()) when compiling the Pattern.
+   */
+  public static final String ANNOTATION_ID_REGEX = "https?://" + "%s" + "/annotation/\\d+";
+
+  private static final Pattern ANNOTATION_ID_SUFFIX_PATTERN = Pattern.compile("/annotation/\\d+$");
 
   /**
    * Generates Annotation ID
@@ -28,19 +35,20 @@ public class FulltextWriteUtils {
    * @param annotation
    * @return
    */
-  public static String toID(eu.europeana.fulltextwrite.model.edm.Annotation annotation) {
-    Hasher h = hfAnno.newHasher().putInt(annotation.getType().ordinal());
+  public static String generateHash(eu.europeana.fulltextwrite.model.edm.Annotation annotation) {
+    StringBuilder hashInput = new StringBuilder(annotation.getType().name());
     if (annotation.hasTargets()) {
       Reference mr = annotation.getTargets().get(0);
-      h.putString(mr.getURL(), Charsets.UTF_8);
+      hashInput.append(mr.getURL());
     }
-    String url = annotation.getTextReference().getURL();
-    h.putString(url, Charsets.UTF_8);
-    return h.hash().toString();
+
+    hashInput.append(annotation.getTextReference().getURL());
+
+    return DigestUtils.md5Hex(hashInput.toString()).toLowerCase();
   }
 
-  public static String toID(String itemID) {
-    return (hfText.newHasher().putString(itemID, Charsets.UTF_8).hash().toString());
+  public static String generateHash(String itemID) {
+    return DigestUtils.md5Hex(itemID).toLowerCase();
   }
 
   /**
@@ -72,24 +80,15 @@ public class FulltextWriteUtils {
    * @return
    */
   public static String generateRecordId(String datasetId, String localId) {
-    return WebConstants.URL_SEPARATOR + datasetId + WebConstants.URL_SEPARATOR + localId;
+    return "/" + datasetId + "/" + localId;
   }
 
-  /**
-   * Returns the Existing AnnoPage Url
-   *
-   * @param fulltextBaseUrl
-   * @param annoPage
-   * @return
-   */
-  public static String getAnnoPageUrl(String fulltextBaseUrl, AnnoPage annoPage) {
-    StringBuilder annoPageUrl = new StringBuilder(fulltextBaseUrl);
-    annoPageUrl.append(WebConstants.URL_SEPARATOR).append(WebConstants.PRESENTATION);
-    annoPageUrl.append(WebConstants.URL_SEPARATOR).append(annoPage.getDsId());
-    annoPageUrl.append(WebConstants.URL_SEPARATOR).append(annoPage.getLcId());
-    annoPageUrl.append(WebConstants.URL_SEPARATOR).append(WebConstants.ANNOPAGE);
-    annoPageUrl.append(WebConstants.URL_SEPARATOR).append(annoPage.getPgId());
-    return annoPageUrl.toString();
+  public static String getDsId(String recordId) {
+    return recordId.split("/")[1];
+  }
+
+  public static String getLocalId(String recordId) {
+    return recordId.split("/")[2];
   }
 
   /**
@@ -124,5 +123,40 @@ public class FulltextWriteUtils {
     AnnoPage annoPage = new AnnoPage(datasetId, localId, "1", media, lang, resource);
     annoPage.setAns(annotations);
     return annoPage;
+  }
+
+  public static String[] getAnnoPageToString(List<? extends AnnoPage> annoPages) {
+    return annoPages.stream().map(AnnoPage::toString).toArray(String[]::new);
+  }
+
+  /** Gets the "{dsId}/{lcId}" part from an EntityId string */
+  public static String getRecordIdFromUri(String recordUri) {
+    // recordUri is always http://data.europeana.eu/item/{dsId}/{lcId}"
+    String[] parts = recordUri.split("/");
+
+    return "/" + parts[parts.length - 2] + "/" + parts[parts.length - 1];
+  }
+
+  public static boolean isValidAnnotationId(String uri, Predicate<String> pattern) {
+    return pattern.test(uri);
+  }
+
+  public static String getDeletedEndpoint(String annotationId) {
+    // annotation id has form at http://<host>/annotation/18503
+    // deletions endpoint is http://<host>/annotations/deleted
+    return ANNOTATION_ID_SUFFIX_PATTERN.matcher(annotationId).replaceFirst("/annotations/deleted");
+  }
+
+  /**
+   * Derives PageID from a media URL.
+   *
+   * @param mediaUrl media (target) url
+   * @return MD5 hash of media url truncated to the first 5 characters
+   */
+  public static String derivePageId(String mediaUrl) {
+    // truncate md5 hash to reduce URL length.
+    // Should not be changed as this method can be used in place of fetching the pageId from the
+    // database.
+    return generateHash(mediaUrl).substring(0, 5);
   }
 }

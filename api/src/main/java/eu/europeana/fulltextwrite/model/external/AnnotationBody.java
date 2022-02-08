@@ -6,6 +6,12 @@ public class AnnotationBody {
   private String format;
   private String language;
 
+  public AnnotationBody() {}
+
+  public AnnotationBody(String value) {
+    this.value = value;
+  }
+
   public String getValue() {
     return value;
   }

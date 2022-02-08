@@ -1,10 +1,10 @@
 package eu.europeana.fulltextwrite.util;
 
 import eu.europeana.fulltext.AnnotationType;
-import eu.europeana.fulltext.entity.AnnoPage;
 import eu.europeana.fulltext.entity.Annotation;
 import eu.europeana.fulltext.entity.Resource;
 import eu.europeana.fulltext.entity.Target;
+import eu.europeana.fulltext.entity.TranslationAnnoPage;
 import eu.europeana.fulltextwrite.exception.FTWriteConversionException;
 import eu.europeana.fulltextwrite.model.AnnotationPreview;
 import eu.europeana.fulltextwrite.model.edm.FullTextResource;
@@ -14,14 +14,9 @@ import eu.europeana.fulltextwrite.model.edm.TimeBoundary;
 import eu.europeana.fulltextwrite.web.WebConstants;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class EDMToFulltextConverter {
-
-  private static final Logger logger = LogManager.getLogger(EDMToFulltextConverter.class);
 
   private EDMToFulltextConverter() {
     // private constructor to hide implicit one
@@ -37,14 +32,20 @@ public class EDMToFulltextConverter {
    * @return
    * @throws FTWriteConversionException
    */
-  public static AnnoPage getAnnoPage(
+  public static TranslationAnnoPage getAnnoPage(
       String datasetId, String localId, AnnotationPreview request, FulltextPackage fulltext)
       throws FTWriteConversionException {
     Resource resource = getResource(fulltext.getResource(), request, datasetId, localId);
-    // TODO not sure how to calculate the pgID
-    AnnoPage annoPage =
-        new AnnoPage(datasetId, localId, "1", request.getMedia(), request.getLanguage(), resource);
+
+    TranslationAnnoPage annoPage = new TranslationAnnoPage();
+    annoPage.setDsId(datasetId);
+    annoPage.setLcId(localId);
+    annoPage.setPgId(FulltextWriteUtils.derivePageId(request.getMedia()));
+    annoPage.setTgtId(request.getMedia());
+    annoPage.setLang(request.getLanguage());
+    annoPage.setRes(resource);
     annoPage.setAns(getAnnotations(fulltext));
+    annoPage.setSource(request.getSource());
     // fail-safe check
     if (annoPage.getAns().size() != fulltext.size()) {
       throw new FTWriteConversionException(
@@ -54,7 +55,6 @@ public class EDMToFulltextConverter {
               + ". Annotations converted - "
               + annoPage.getAns().size());
     }
-    logger.info("Successfully converted EDM to AnnoPage for record {}", request.getRecordId());
     return annoPage;
   }
 
@@ -71,11 +71,7 @@ public class EDMToFulltextConverter {
 
   private static List<Annotation> getAnnotations(FulltextPackage fulltext) {
     List<Annotation> annotationList = new ArrayList<>();
-    ListIterator<eu.europeana.fulltextwrite.model.edm.Annotation> annotationListIterator =
-        fulltext.listIterator();
-    while (annotationListIterator.hasNext()) {
-      eu.europeana.fulltextwrite.model.edm.Annotation sourceAnnotation =
-          annotationListIterator.next();
+    for (eu.europeana.fulltextwrite.model.edm.Annotation sourceAnnotation : fulltext) {
       TextBoundary boundary = (TextBoundary) sourceAnnotation.getTextReference();
       List<Target> targets = new ArrayList<>();
       if (sourceAnnotation.hasTargets()) {
@@ -111,6 +107,6 @@ public class EDMToFulltextConverter {
    */
   private static String getFulltextResourceId(String fulltextResourceUri, String itemID) {
     return StringUtils.substringAfter(
-        fulltextResourceUri, WebConstants.BASE_FULLTEXT_URL + itemID + WebConstants.URL_SEPARATOR);
+        fulltextResourceUri, WebConstants.BASE_FULLTEXT_URL + itemID + "/");
   }
 }

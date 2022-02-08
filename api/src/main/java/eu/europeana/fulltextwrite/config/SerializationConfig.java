@@ -11,22 +11,24 @@ import java.text.SimpleDateFormat;
 import java.util.Locale;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 @Configuration
-public class JsonLdSerializerConfig {
+public class SerializationConfig {
 
   public static final String CONTEXT = "http://www.europeana.eu/schemas/context/collection.jsonld";
   public final DateFormat dateFormat =
       new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH);
 
   @Bean
+  @Primary
   public ObjectMapper mapper() {
     ObjectMapper mapper =
         new Jackson2ObjectMapperBuilder()
             .defaultUseWrapper(false)
             .dateFormat(dateFormat)
-            .serializationInclusion(JsonInclude.Include.NON_NULL)
+            .serializationInclusion(JsonInclude.Include.NON_EMPTY)
             .build();
     mapper.findAndRegisterModules();
     return mapper;

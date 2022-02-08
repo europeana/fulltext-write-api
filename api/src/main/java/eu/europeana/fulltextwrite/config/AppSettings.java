@@ -39,6 +39,9 @@ public class AppSettings {
   @Value("${annotations.serviceurl}")
   private String annotationsApiUrl;
 
+  @Value("${annotations.id.hosts}")
+  private String annotationIdHostsPattern;
+
   @Value("${annotations.wskey}")
   private String annotationsApiKey;
 
@@ -47,6 +50,24 @@ public class AppSettings {
 
   @Value("${fulltext.service.url}")
   private String fulltextApiUrl;
+
+  @Value("${batch.executor.corePool: 5}")
+  private int batchCorePoolSize;
+
+  @Value("${batch.executor.maxPool: 10}")
+  private int batchMaxPoolSize;
+
+  @Value("${batch.step.executor.queueSize: 5}")
+  private int batchQueueSize;
+
+  @Value("${batch.step.throttleLimit: 5}")
+  private int annoSyncThrottleLimit;
+
+  @Value("${batch.scheduling.annoSync.initialDelaySeconds}")
+  private int annoSyncInitialDelay;
+
+  @Value("${batch.scheduling.annoSync.intervalSeconds}")
+  private int annoSyncInterval;
 
   public boolean isAuthEnabled() {
     return authEnabled;
@@ -94,5 +115,33 @@ public class AppSettings {
 
   public String getFulltextApiUrl() {
     return fulltextApiUrl;
+  }
+
+  public int getBatchCorePoolSize() {
+    return batchCorePoolSize;
+  }
+
+  public int getBatchMaxPoolSize() {
+    return batchMaxPoolSize;
+  }
+
+  public int getBatchQueueSize() {
+    return batchQueueSize;
+  }
+
+  public int getAnnoSyncInitialDelay() {
+    return annoSyncInitialDelay;
+  }
+
+  public int getAnnoSyncInterval() {
+    return annoSyncInterval;
+  }
+
+  public int getAnnoSyncThrottleLimit() {
+    return annoSyncThrottleLimit;
+  }
+
+  public String getAnnotationIdHostsPattern() {
+    return annotationIdHostsPattern;
   }
 }

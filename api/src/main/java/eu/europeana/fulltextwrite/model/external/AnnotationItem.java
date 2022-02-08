@@ -1,7 +1,6 @@
 package eu.europeana.fulltextwrite.model.external;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.time.Instant;
 import java.util.Date;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -12,7 +11,7 @@ public class AnnotationItem {
 
   private String motivation;
 
-  private Instant created;
+  private Date created;
 
   private AnnotationCreator creator;
 
@@ -38,7 +37,7 @@ public class AnnotationItem {
     return body;
   }
 
-  public Instant getCreated() {
+  public Date getCreated() {
     return created;
   }
 

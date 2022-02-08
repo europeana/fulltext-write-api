@@ -7,7 +7,6 @@ import java.util.List;
 public class AnnotationSearchResponse {
   private String id;
   private int total;
-  private String next;
 
   private List<AnnotationItem> items;
 
@@ -17,10 +16,6 @@ public class AnnotationSearchResponse {
 
   public int getTotal() {
     return total;
-  }
-
-  public String getNext() {
-    return next;
   }
 
   public List<AnnotationItem> getItems() {

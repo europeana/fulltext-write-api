@@ -101,6 +101,14 @@
       <version>${morphia.version}</version>
     </dependency>
 
+    <!-- Used for hash generation -->
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>1.15</version>
+    </dependency>
+
+
     <dependency>
       <groupId>org.mongodb</groupId>
       <artifactId>mongo-java-driver</artifactId>
@@ -143,6 +151,15 @@
       </exclusions>
     </dependency>
 
+
+    <!-- Fixes DNS resolution issues on Apple Silicon  -->
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-resolver-dns-native-macos</artifactId>
+      <version>4.1.69.Final</version>
+      <classifier>osx-aarch_64</classifier>
+    </dependency>
+
     <!--testcontainers for integration testing-->
     <dependency>
       <groupId>org.testcontainers</groupId>
@@ -154,7 +171,20 @@
       <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>okhttp</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>mockwebserver</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
+
+
 
   <build>
     <!-- set fixed name for easy deployment -->
