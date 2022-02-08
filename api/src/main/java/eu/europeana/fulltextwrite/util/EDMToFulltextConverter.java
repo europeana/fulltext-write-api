@@ -3,10 +3,7 @@ package eu.europeana.fulltextwrite.util;
 import static eu.europeana.fulltextwrite.util.FulltextWriteUtils.generateHash;
 
 import eu.europeana.fulltext.AnnotationType;
-import eu.europeana.fulltext.entity.Annotation;
-import eu.europeana.fulltext.entity.Resource;
-import eu.europeana.fulltext.entity.Target;
-import eu.europeana.fulltext.entity.TranslationAnnoPage;
+import eu.europeana.fulltext.entity.*;
 import eu.europeana.fulltextwrite.exception.FTWriteConversionException;
 import eu.europeana.fulltextwrite.model.AnnotationPreview;
 import eu.europeana.fulltextwrite.model.edm.FullTextResource;
@@ -41,8 +38,7 @@ public class EDMToFulltextConverter {
   public static TranslationAnnoPage getAnnoPage(
       String datasetId, String localId, AnnotationPreview request, FulltextPackage fulltext)
       throws FTWriteConversionException {
-    Resource resource = getResource(fulltext.getResource(), request, datasetId, localId);
-
+    TranslationResource resource = getResource(fulltext.getResource(), request, datasetId, localId);
     TranslationAnnoPage annoPage = new TranslationAnnoPage();
     annoPage.setDsId(datasetId);
     annoPage.setLcId(localId);
@@ -50,6 +46,10 @@ public class EDMToFulltextConverter {
     annoPage.setPgId(generateHash(request.getMedia()).substring(0, 5));
     annoPage.setTgtId(request.getMedia());
     annoPage.setLang(request.getLanguage());
+    // set the source if present
+    if (!StringUtils.isEmpty(request.getSource())) {
+      annoPage.setSource(request.getSource());
+    }
     annoPage.setRes(resource);
     annoPage.setAns(getAnnotations(fulltext));
     // fail-safe check
@@ -65,15 +65,17 @@ public class EDMToFulltextConverter {
     return annoPage;
   }
 
-  private static Resource getResource(
+  private static TranslationResource getResource(
       FullTextResource ftResource, AnnotationPreview request, String datasetId, String localId) {
-    return new Resource(
-        getFulltextResourceId(ftResource.getFullTextResourceURI(), request.getRecordId()),
-        request.getLanguage(),
-        ftResource.getValue(),
-        request.getRights(),
-        datasetId,
-        localId);
+    TranslationResource resource = new TranslationResource();
+    resource.setId(
+        getFulltextResourceId(ftResource.getFullTextResourceURI(), request.getRecordId()));
+    resource.setLang(request.getLanguage());
+    resource.setValue(ftResource.getValue());
+    resource.setRights(request.getRights());
+    resource.setDsId(datasetId);
+    resource.setLcId(localId);
+    return resource;
   }
 
   private static List<Annotation> getAnnotations(FulltextPackage fulltext) {

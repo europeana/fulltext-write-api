@@ -4,15 +4,15 @@ import eu.europeana.api.commons.error.EuropeanaApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(HttpStatus.MOVED_PERMANENTLY)
-public class AnnoPageExistException extends EuropeanaApiException {
+@ResponseStatus(HttpStatus.NOT_FOUND)
+public class AnnoPageDoesNotExistException extends EuropeanaApiException {
 
   /**
    * Initialise a new exception for which there is no root cause
    *
    * @param msg error message
    */
-  public AnnoPageExistException(String msg) {
+  public AnnoPageDoesNotExistException(String msg) {
     super(msg);
   }
 
@@ -22,7 +22,7 @@ public class AnnoPageExistException extends EuropeanaApiException {
    * @param msg error message
    * @param errorCode error code
    */
-  public AnnoPageExistException(String msg, String errorCode) {
+  public AnnoPageDoesNotExistException(String msg, String errorCode) {
     super(msg, errorCode);
   }
 

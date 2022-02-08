@@ -15,6 +15,7 @@ public class WebConstants {
   public static final String REQUEST_VALUE_ORIGINAL_LANG = "originalLang";
   public static final String REQUEST_VALUE_RIGHTS = "rights";
   public static final String REQUEST_VALUE_DOC = "document";
+  public static final String REQUEST_VALUE_SOURCE = "source";
 
   // Fulltext Urls constants
   public static final String PRESENTATION = "presentation";

@@ -7,9 +7,9 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import dev.morphia.Datastore;
 import dev.morphia.Morphia;
-import dev.morphia.mapping.MapperOptions;
 import eu.europeana.batch.entity.PackageMapper;
 import eu.europeana.fulltext.entity.AnnoPage;
+import eu.europeana.fulltext.util.MorphiaUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Bean;
@@ -38,7 +38,7 @@ public class DatasourceConfig {
 
     // use same Morphia settings as Fulltext API
     Datastore datastore =
-        Morphia.createDatastore(mongoClient, fulltextDatabase, MapperOptions.legacy().build());
+        Morphia.createDatastore(mongoClient, fulltextDatabase, MorphiaUtils.MAPPER_OPTIONS);
 
     // Indices aren't changeType unless Entity classes are explicitly mapped. Only required for
     // development, as indices already exist on production db

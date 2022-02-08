@@ -41,9 +41,12 @@ public class SubtitleHandlerService {
   public FulltextPackage convert(AnnotationPreview preview) {
     String uri = WebConstants.BASE_ITEM_URL + preview.getRecordId();
     String annotationPageURI = FulltextWriteUtils.getAnnotationPageURI(preview.getRecordId());
+    // generate resource id - hash of recordId and lang(this is to avoid any override of the
+    // resource based on same recordId but different lang)
     String fullTextResourceURI =
         FulltextWriteUtils.getFullTextResourceURI(
-            preview.getRecordId(), FulltextWriteUtils.generateHash(preview.getRecordId()));
+            preview.getRecordId(),
+            FulltextWriteUtils.generateHash(preview.getRecordId() + preview.getLanguage()));
 
     FulltextPackage page = new FulltextPackage(annotationPageURI, null);
 
