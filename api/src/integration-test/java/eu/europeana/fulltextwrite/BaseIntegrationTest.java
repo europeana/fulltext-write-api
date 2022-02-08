@@ -29,5 +29,7 @@ public abstract class BaseIntegrationTest {
     registry.add("mongo.connectionUrl", MONGO_CONTAINER::getConnectionUrl);
     registry.add("mongo.fulltext.database", MONGO_CONTAINER::getFulltextDb);
     registry.add("mongo.batch.database", MONGO_CONTAINER::getBatchDb);
+    // remove annotationId domain restriction for tests
+    registry.add("annotations.id.hosts", () -> ".*");
   }
 }

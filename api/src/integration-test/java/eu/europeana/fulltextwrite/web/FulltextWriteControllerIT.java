@@ -35,6 +35,7 @@ class FulltextWriteControllerIT extends BaseIntegrationTest {
 
   public static final String BASE_SERVICE_URL = "/presentation";
 
+
   private MockMvc mockMvc;
 
   @BeforeEach
@@ -51,7 +52,7 @@ class FulltextWriteControllerIT extends BaseIntegrationTest {
 
     String result = mockMvc
         .perform(
-            post(BASE_SERVICE_URL + "/08604/FDE2205EEE384218A8D986E5138F9691/annopage")
+            post("/presentation/08604/FDE2205EEE384218A8D986E5138F9691/annopage")
                 .param(WebConstants.REQUEST_VALUE_MEDIA, "https://www.filmportal.de/node/1197365")
                 .param(WebConstants.REQUEST_VALUE_LANG, "nl")
                 .param(
@@ -83,7 +84,6 @@ class FulltextWriteControllerIT extends BaseIntegrationTest {
         .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
 
     Assert.assertNotNull(result);
-
   }
 
   @Test

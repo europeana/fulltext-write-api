@@ -39,6 +39,9 @@ public class AppSettings {
   @Value("${annotations.serviceurl}")
   private String annotationsApiUrl;
 
+  @Value("${annotations.id.hosts}")
+  private String annotationIdHostsPattern;
+
   @Value("${annotations.wskey}")
   private String annotationsApiKey;
 
@@ -136,5 +139,9 @@ public class AppSettings {
 
   public int getAnnoSyncThrottleLimit() {
     return annoSyncThrottleLimit;
+  }
+
+  public String getAnnotationIdHostsPattern() {
+    return annotationIdHostsPattern;
   }
 }

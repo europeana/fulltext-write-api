@@ -28,7 +28,7 @@ public class SerializationConfig {
         new Jackson2ObjectMapperBuilder()
             .defaultUseWrapper(false)
             .dateFormat(dateFormat)
-            .serializationInclusion(JsonInclude.Include.NON_NULL)
+            .serializationInclusion(JsonInclude.Include.NON_EMPTY)
             .build();
     mapper.findAndRegisterModules();
     return mapper;

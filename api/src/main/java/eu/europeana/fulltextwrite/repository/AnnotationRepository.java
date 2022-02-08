@@ -38,8 +38,24 @@ public class AnnotationRepository {
     this.datastore = datastore;
   }
 
-  public TranslationAnnoPage getAnnoPageByTargetIdLang(
-      String datasetId, String localId, String targetId, String lang) {
+  public boolean annoPageExists(String datasetId, String localId, String targetId, String lang) {
+    TranslationAnnoPage annoPage =
+        datastore
+            .find(TranslationAnnoPage.class)
+            .filter(
+                eq(DATASET_ID, datasetId),
+                eq(LOCAL_ID, localId),
+                eq(LANGUAGE, lang),
+                eq(TARGET_ID, targetId))
+            // Since document contents aren't important for this query, just fetch _id
+            .iterator(new FindOptions().limit(1).projection().include("_id"))
+            .tryNext();
+
+    return annoPage != null;
+  }
+
+  public TranslationAnnoPage getAnnoPage(
+      String datasetId, String localId, String targetId, String lang, String pgId) {
     Aggregation<TranslationAnnoPage> query =
         datastore
             .aggregate(TranslationAnnoPage.class)
@@ -47,14 +63,8 @@ public class AnnotationRepository {
                 eq(DATASET_ID, datasetId),
                 eq(LOCAL_ID, localId),
                 eq(TARGET_ID, targetId),
-                eq(LANGUAGE, lang))
-            .project(
-                Projection.of()
-                    .include(DATASET_ID)
-                    .include(LOCAL_ID)
-                    .include(PAGE_ID)
-                    .include(TARGET_ID)
-                    .include(LANGUAGE));
+                eq(LANGUAGE, lang),
+                eq(PAGE_ID, pgId));
 
     return query.execute(TranslationAnnoPage.class).tryNext();
   }
@@ -143,10 +153,6 @@ public class AnnotationRepository {
     return datastore.save(annoPage);
   }
 
-  public List<TranslationAnnoPage> saveAnnoPageBulk(List<TranslationAnnoPage> annoPageList) {
-    return datastore.save(annoPageList);
-  }
-
   public BulkWriteResult upsertBulk(List<? extends TranslationAnnoPage> annoPageList) {
     MongoCollection<TranslationAnnoPage> collection =
         datastore.getMapper().getCollection(TranslationAnnoPage.class);
@@ -164,6 +170,7 @@ public class AnnotationRepository {
               .append(ANNOTATIONS, annoPage.getAns())
               .append(MODIFIED, now)
               .append(LANGUAGE, annoPage.getLang())
+              .append(SOURCE, annoPage.getSource())
               .append(RESOURCE, annoPage.getRes());
       // className discriminator no longer used
 
@@ -175,10 +182,11 @@ public class AnnotationRepository {
                       annoPage.getDsId(),
                       LOCAL_ID,
                       annoPage.getLcId(),
+                      LANGUAGE,
+                      annoPage.getLang(),
                       PAGE_ID,
                       annoPage.getPgId())),
               new Document("$set", updateDoc),
-              // set "created" and updateType if this is a new document,
               UPSERT_OPTS));
     }
 
@@ -211,5 +219,28 @@ public class AnnotationRepository {
 
   public long count() {
     return datastore.getMapper().getCollection(TranslationAnnoPage.class).countDocuments();
+  }
+
+  public long deleteAnnoPagesWithSource(String source) {
+    return datastore
+        .find(TranslationAnnoPage.class)
+        .filter(eq(SOURCE, source))
+        .delete(MorphiaUtils.MULTI_DELETE_OPTS)
+        .getDeletedCount();
+  }
+
+  public TranslationAnnoPage getAnnoPageWithSource(String source, boolean fetchFullDoc) {
+    FindOptions findOptions = new FindOptions().limit(1);
+
+    if (!fetchFullDoc) {
+      findOptions =
+          findOptions.projection().include(DATASET_ID, LOCAL_ID, PAGE_ID, TARGET_ID, SOURCE);
+    }
+
+    return datastore
+        .find(TranslationAnnoPage.class)
+        .filter(eq(SOURCE, source))
+        .iterator(findOptions)
+        .tryNext();
   }
 }

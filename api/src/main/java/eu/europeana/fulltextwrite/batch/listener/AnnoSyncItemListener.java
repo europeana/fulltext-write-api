@@ -18,13 +18,13 @@ public class AnnoSyncItemListener extends ItemListenerSupport<AnnotationItem, An
   @Override
   public void onReadError(@NonNull Exception e) {
     // No item linked to error, so we just log a warning
-    logger.warn("onReadError", e);
+    logger.error("onReadError", e);
   }
 
   @Override
   public void onProcessError(@NonNull AnnotationItem item, @NonNull Exception e) {
     // just log warning for now
-    logger.warn(
+    logger.error(
         "Error processing AnnotationItem id={}; recordId={}",
         item.getId(),
         item.getTarget().getScope(),
@@ -33,6 +33,6 @@ public class AnnoSyncItemListener extends ItemListenerSupport<AnnotationItem, An
 
   @Override
   public void onWriteError(@NonNull Exception ex, @NonNull List<? extends AnnoPage> annoPages) {
-    logger.warn("Error saving AnnoPages {}, ", getAnnoPageToString(annoPages), ex);
+    logger.error("Error saving AnnoPages {}, ", getAnnoPageToString(annoPages), ex);
   }
 }

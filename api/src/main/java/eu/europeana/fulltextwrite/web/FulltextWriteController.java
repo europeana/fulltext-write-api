@@ -1,5 +1,9 @@
 package eu.europeana.fulltextwrite.web;
 
+import static eu.europeana.fulltextwrite.util.FulltextWriteUtils.isValidAnnotationId;
+import static eu.europeana.fulltextwrite.web.WebConstants.MOTIVATION_SUBTITLING;
+import static eu.europeana.fulltextwrite.web.WebConstants.REQUEST_VALUE_SOURCE;
+
 import com.dotsub.converter.model.SubtitleItem;
 import eu.europeana.api.commons.error.EuropeanaApiException;
 import eu.europeana.api.commons.web.exception.ApplicationAuthenticationException;
@@ -12,10 +16,15 @@ import eu.europeana.fulltextwrite.exception.AnnoPageDoesNotExistException;
 import eu.europeana.fulltextwrite.exception.FTWriteConversionException;
 import eu.europeana.fulltextwrite.exception.InvalidFormatException;
 import eu.europeana.fulltextwrite.exception.MediaTypeNotSupportedException;
+import eu.europeana.fulltextwrite.exception.UnsupportedAnnotationException;
 import eu.europeana.fulltextwrite.model.AnnotationPreview;
 import eu.europeana.fulltextwrite.model.AnnotationPreview.Builder;
+import eu.europeana.fulltextwrite.model.DeleteAnnoSyncResponse;
+import eu.europeana.fulltextwrite.model.DeleteAnnoSyncResponse.Status;
 import eu.europeana.fulltextwrite.model.SubtitleType;
+import eu.europeana.fulltextwrite.model.external.AnnotationItem;
 import eu.europeana.fulltextwrite.service.AnnotationService;
+import eu.europeana.fulltextwrite.service.AnnotationsApiRestService;
 import eu.europeana.fulltextwrite.service.SubtitleHandlerService;
 import eu.europeana.fulltextwrite.util.FulltextWriteUtils;
 import io.swagger.annotations.ApiOperation;
@@ -26,6 +35,9 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
@@ -37,34 +49,96 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @Validated
-@RequestMapping("/presentation")
 public class FulltextWriteController extends BaseRest {
 
   private final AppSettings appSettings;
   private final SubtitleHandlerService subtitleHandlerService;
+  private final AnnotationsApiRestService annotationsApiRestService;
 
   private final AnnotationService annotationService;
+
+  private final Predicate<String> annotationIdPattern;
 
   public FulltextWriteController(
       AppSettings appSettings,
       SubtitleHandlerService subtitleHandlerService,
+      AnnotationsApiRestService annotationsApiRestService,
       AnnotationService annotationService) {
     this.appSettings = appSettings;
     this.subtitleHandlerService = subtitleHandlerService;
+    this.annotationsApiRestService = annotationsApiRestService;
     this.annotationService = annotationService;
+    annotationIdPattern =
+        Pattern.compile(
+                String.format(
+                    FulltextWriteUtils.ANNOTATION_ID_REGEX,
+                    appSettings.getAnnotationIdHostsPattern()))
+            .asMatchPredicate();
+  }
+
+  @ApiOperation(value = "Propagate and synchronise with Annotations API")
+  @PostMapping(
+      value = "/fulltext/annosync",
+      produces = {HttpHeaders.CONTENT_TYPE_JSONLD, MediaType.APPLICATION_JSON_VALUE})
+  public ResponseEntity<String> syncAnnotations(
+      @RequestParam(value = REQUEST_VALUE_SOURCE) String source, HttpServletRequest request)
+      throws ApplicationAuthenticationException, EuropeanaApiException, IOException {
+    if (appSettings.isAuthEnabled()) {
+      verifyWriteAccess(Operations.UPDATE, request);
+    }
+
+    // check that sourceUrl is valid, and points to a europeana.eu domain
+    if (!isValidAnnotationId(source, annotationIdPattern)) {
+      throw new InvalidUriException(
+          String.format(
+              "'%s' request parameter must be a valid annotation id", REQUEST_VALUE_SOURCE));
+    }
+
+    Optional<AnnotationItem> itemOptional = annotationsApiRestService.retrieveAnnotation(source);
+    if (itemOptional.isEmpty()) {
+      // annotationItem not present, meaning 410 returned by Annotation API - so it has been deleted
+
+      TranslationAnnoPage annoPage = annotationService.getShellAnnoPageBySource(source);
+      long count = annotationService.deleteAnnoPagesWithSource(source);
+
+      DeleteAnnoSyncResponse response =
+          new DeleteAnnoSyncResponse(
+              source, count > 0 ? Status.DELETED.getValue() : Status.NOOP.getValue(), annoPage);
+
+      return generateResponse(request, serializeResponse(response), HttpStatus.ACCEPTED);
+    }
+
+    AnnotationItem item = itemOptional.get();
+    // motivation must be subtitling
+
+    if (!MOTIVATION_SUBTITLING.equals(item.getMotivation())) {
+      throw new UnsupportedAnnotationException(
+          String.format(
+              "Annotation motivation '%s' not supported for sync. Only subtitles are supported",
+              item.getMotivation()));
+    }
+
+    AnnotationPreview annotationPreview =
+        annotationService.createAnnotationPreview(itemOptional.get());
+    TranslationAnnoPage annoPage = annotationService.createAnnoPage(annotationPreview);
+
+    // Morphia creates a new _id value if none exists, so we can't directly call save() – as this
+    // could be an update.
+    annotationService.upsertAnnoPage(List.of(annoPage));
+
+    return generateResponse(request, serializeJsonLd(annoPage), HttpStatus.ACCEPTED);
   }
 
   @ApiOperation(
       value = "Submits a new fulltext document for a given Europeana ID (dataset + localID)")
   @PostMapping(
-      value = "/{datasetId}/{localId}/annopage",
+      value = "/presentation/{datasetId}/{localId}/annopage",
       produces = {HttpHeaders.CONTENT_TYPE_JSONLD, MediaType.APPLICATION_JSON_VALUE})
   public ResponseEntity<String> submitNewFulltext(
       @PathVariable(value = WebConstants.REQUEST_VALUE_DATASET_ID) String datasetId,
@@ -106,16 +180,21 @@ public class FulltextWriteController extends BaseRest {
      * Check if there is a fulltext annotation page associated with the combination of DATASET_ID,
      * LOCAL_ID and the media URL, if so then return a HTTP 301 with the URL of the Annotation Page
      */
-    AnnoPage annoPage = annotationService.getAnnoPageByTargetId(datasetId, localId, media, lang);
-    if (annoPage != null) {
-      // return 301 redirect.
-      // send the lang parameter as well to get the response from Translations
+
+    if (annotationService.annoPageExists(datasetId, localId, media, lang)) {
+      // return 301 redirect
       return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
           .location(
               UriComponentsBuilder.newInstance()
                   .uri(new URI(appSettings.getFulltextApiUrl()))
-                  .path(FulltextWriteUtils.getAnnoPageUrl(annoPage))
-                  .query(WebConstants.REQUEST_VALUE_LANG + "=" + annoPage.getLang())
+               .path(
+                      "/presentation/"
+                          + datasetId
+                          + "/"
+                          + localId
+                          + "/annopage/"
+                          + FulltextWriteUtils.derivePageId(media))
+        .query(WebConstants.REQUEST_VALUE_LANG + "=" + annoPage.getLang())
                   .build()
                   .toUri())
           .build();
@@ -136,7 +215,7 @@ public class FulltextWriteController extends BaseRest {
 
   @ApiOperation(value = "Replaces existing fulltext for a media resource with a new document")
   @PutMapping(
-      value = "/{datasetId}/{localId}/annopage/{pageId}",
+      value = "/presentation/{datasetId}/{localId}/annopage/{pageId}",
       produces = {HttpHeaders.CONTENT_TYPE_JSONLD, MediaType.APPLICATION_JSON_VALUE})
   public ResponseEntity<String> replaceFullText(
       @PathVariable(value = WebConstants.REQUEST_VALUE_DATASET_ID) String datasetId,
