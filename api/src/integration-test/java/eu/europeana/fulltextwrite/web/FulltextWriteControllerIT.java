@@ -135,6 +135,6 @@ class FulltextWriteControllerIT extends BaseIntegrationTest {
                     delete(BASE_SERVICE_URL + "/9200338/BibliographicResource_3000094252504/annopage/1")
                             .param(WebConstants.REQUEST_VALUE_LANG, "it")
                             .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isNoContent());
+            .andExpect(status().isNotFound());
   }
 }

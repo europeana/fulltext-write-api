@@ -107,6 +107,7 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
     service.saveAnnoPage(annoPage);
     assertEquals(1, service.count());
     assertEquals(1, service.countResource());
+    System.out.println(annoPage.getRes().getRights());
 
     // now update
     AnnotationPreview preview = new AnnotationPreview.Builder(FulltextWriteUtils.generateRecordId(annoPage.getDsId(),
@@ -118,9 +119,10 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
 
     TranslationAnnoPage updatedAnnopage = service.updateAnnoPage(preview, annoPage);
 
+    System.out.println(annoPage.getRes().getRights());
     // check
     assertEquals(updatedAnnopage.getSource(), "https://annotation/source/value");
-    assertEquals(updatedAnnopage.getRes().getRights(), annoPage.getRes().getRights() + "updated");
+    assertEquals(annoPage.getRes().getRights() + "updated", updatedAnnopage.getRes().getRights());
     assertEquals(annoPage.getAns().size(), updatedAnnopage.getAns().size());
     assertEquals(annoPage.getLang(), updatedAnnopage.getLang());
     assertEquals(1, service.count());
