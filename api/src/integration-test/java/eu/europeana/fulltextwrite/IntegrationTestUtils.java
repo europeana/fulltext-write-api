@@ -11,6 +11,8 @@ public class IntegrationTestUtils {
 
   public static final String ANNOPAGE_FILMPORTAL_1197365_JSON =
       "/annopages/annopage-filmportal-1197365.json";
+  public static final String ANNOPAGE_FILMPORTAL_1197365_EN_JSON =
+      "/annopages/annopage-filmportal-1197365_en.json";
   public static final String ANNOPAGE_REPOZYTORIUM_8333_JSON =
       "/annopages/annopage-repozytorium-8333.json";
   public static final String ANNOPAGE_REPOZYTORIUM_9927_JSON =

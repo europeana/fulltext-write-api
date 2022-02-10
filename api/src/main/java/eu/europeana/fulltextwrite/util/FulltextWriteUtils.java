@@ -1,15 +1,15 @@
 package eu.europeana.fulltextwrite.util;
 
 import eu.europeana.fulltext.entity.AnnoPage;
-import eu.europeana.fulltext.entity.Annotation;
-import eu.europeana.fulltext.entity.Resource;
 import eu.europeana.fulltextwrite.model.edm.Reference;
+import eu.europeana.fulltextwrite.model.edm.TextBoundary;
+import eu.europeana.fulltextwrite.model.edm.TimeBoundary;
 import eu.europeana.fulltextwrite.web.WebConstants;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public class FulltextWriteUtils {
 
@@ -30,7 +30,11 @@ public class FulltextWriteUtils {
   private static final Pattern ANNOTATION_ID_SUFFIX_PATTERN = Pattern.compile("/annotation/\\d+$");
 
   /**
-   * Generates Annotation ID
+   * Generates Annotation ID. Hash of -> annotation.getType() url of the target (mediaUrl +
+   * fragment) (if present) url of the fulltextResource (fulltext resource url + fragment)
+   *
+   * <p>fragment is calculated based on the boundaries. See: {@link TextBoundary#getFragment()} ()}
+   * Or {@link TimeBoundary#getFragment()}
    *
    * @param annotation
    * @return
@@ -92,37 +96,40 @@ public class FulltextWriteUtils {
   }
 
   /**
-   * Creates a dummy shell record
+   * Returns the Existing AnnoPage Url
    *
-   * @param datasetId
-   * @param localId
-   * @param rights
-   * @param lang
+   * @param annoPage
    * @return
    */
-  public static AnnoPage createDummyAnnotation(
-      String datasetId, String localId, String media, String rights, String lang) {
-    Resource resource =
-        new Resource(
-            datasetId + localId,
-            lang,
-            "SEPTEMBRE.\n"
-                + "Nique te ut miretur turb* > labore* „ €*ntcntus paucis lectoribus. Hor. Sat. 10» I. 1.\n"
-                + "A MAESTRICHT,\n"
-                + "Chez François Cavelier.",
-            rights,
-            datasetId,
-            localId);
+  public static String getAnnoPageUrl(AnnoPage annoPage) {
+    return "/"
+        + WebConstants.PRESENTATION
+        + "/"
+        + annoPage.getDsId()
+        + "/"
+        + annoPage.getLcId()
+        + "/"
+        + WebConstants.ANNOPAGE
+        + "/"
+        + annoPage.getPgId();
+  }
 
-    List<Annotation> annotations = new ArrayList<>();
-    Annotation annotation = new Annotation("annid-123", 'W', 0, 7);
-    annotations.add(annotation);
-    annotation = new Annotation("annid-456", 'L', 0, 7);
-    annotations.add(annotation);
-
-    AnnoPage annoPage = new AnnoPage(datasetId, localId, "1", media, lang, resource);
-    annoPage.setAns(annotations);
-    return annoPage;
+  /**
+   * Returns the Existing Translation AnnoPage Url lang parameter is required to fetch the
+   * translation annopage
+   *
+   * @param annoPage
+   * @return
+   */
+  public static String getTranslationAnnoPageUrl(AnnoPage annoPage) {
+    if (StringUtils.isNotEmpty(annoPage.getLang())) {
+      return getAnnoPageUrl(annoPage)
+          + "?"
+          + WebConstants.REQUEST_VALUE_LANG
+          + "="
+          + annoPage.getLang();
+    }
+    return getAnnoPageUrl(annoPage);
   }
 
   public static String[] getAnnoPageToString(List<? extends AnnoPage> annoPages) {

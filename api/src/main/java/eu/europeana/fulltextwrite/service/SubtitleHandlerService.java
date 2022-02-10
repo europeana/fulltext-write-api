@@ -42,9 +42,12 @@ public class SubtitleHandlerService {
   public FulltextPackage convert(AnnotationPreview preview) {
     String uri = WebConstants.BASE_ITEM_URL + preview.getRecordId();
     String annotationPageURI = FulltextWriteUtils.getAnnotationPageURI(preview.getRecordId());
+    // generate resource id - hash of recordId and lang(this is to avoid any override of the
+    // resource based on same recordId but different lang)
     String fullTextResourceURI =
         FulltextWriteUtils.getFullTextResourceURI(
-            preview.getRecordId(), FulltextWriteUtils.generateHash(preview.getRecordId()));
+            preview.getRecordId(),
+            FulltextWriteUtils.generateHash(preview.getRecordId() + preview.getLanguage()));
 
     FulltextPackage page = new FulltextPackage(annotationPageURI, null);
 
@@ -74,7 +77,7 @@ public class SubtitleHandlerService {
     resource.setValue(subtitleContext.end());
     page.setResource(resource);
     if (logger.isDebugEnabled()) {
-      logger.info(
+      logger.debug(
           "Successfully converted SRT to EDM for record {}. Processed Annotations - {}",
           preview.getRecordId(),
           page.size());
