@@ -77,19 +77,23 @@ public class ResourceRepository {
   }
 
   private WriteModel<TranslationResource> createResourceUpdate(TranslationResource res) {
+    Document updateDoc =
+        new Document(DATASET_ID, res.getDsId())
+            .append(LOCAL_ID, res.getLcId())
+            .append(LANGUAGE, res.getLang())
+            .append(VALUE, res.getValue())
+            .append(RIGHTS, res.getRights());
+
+    // source not always set. Prevent null field from being saved
+    if (res.getSource() != null) {
+      updateDoc.append(SOURCE, res.getSource());
+    }
     return new UpdateOneModel<>(
         new Document(
             // filter
             Map.of(DATASET_ID, res.getDsId(), LOCAL_ID, res.getLcId(), LANGUAGE, res.getLang())),
         // update doc
-        new Document(
-            "$set",
-            new Document(DATASET_ID, res.getDsId())
-                .append(LOCAL_ID, res.getLcId())
-                .append(LANGUAGE, res.getLang())
-                .append(VALUE, res.getValue())
-                .append(SOURCE, res.getSource())
-                .append(RIGHTS, res.getRights())),
+        new Document("$set", updateDoc),
         UPSERT_OPTS);
   }
 }
