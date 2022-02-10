@@ -11,10 +11,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europeana.fulltext.entity.TranslationAnnoPage;
 import eu.europeana.fulltextwrite.BaseIntegrationTest;
 import eu.europeana.fulltextwrite.IntegrationTestUtils;
-import eu.europeana.fulltextwrite.repository.AnnotationRepository;
+import eu.europeana.fulltextwrite.repository.AnnoPageRepository;
 import eu.europeana.fulltextwrite.repository.ResourceRepository;
 import eu.europeana.fulltextwrite.util.FulltextWriteUtils;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +29,7 @@ import org.springframework.web.context.WebApplicationContext;
 @AutoConfigureMockMvc
 class FulltextWriteControllerIT extends BaseIntegrationTest {
   @Autowired private WebApplicationContext webApplicationContext;
-  @Autowired private AnnotationRepository annotationRepository;
+  @Autowired private AnnoPageRepository annotationRepository;
   @Autowired private ResourceRepository resourceRepository;
   @Autowired ObjectMapper mapper;
 
@@ -67,7 +67,7 @@ class FulltextWriteControllerIT extends BaseIntegrationTest {
             .getResponse()
             .getContentAsString();
 
-    Assert.assertNotNull(result);
+    Assertions.assertNotNull(result);
   }
 
   @Test
@@ -93,7 +93,7 @@ class FulltextWriteControllerIT extends BaseIntegrationTest {
             .getResponse()
             .getContentAsString();
 
-    Assert.assertNotNull(result);
+    Assertions.assertNotNull(result);
   }
 
   @Test

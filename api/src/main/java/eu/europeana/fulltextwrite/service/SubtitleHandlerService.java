@@ -77,7 +77,7 @@ public class SubtitleHandlerService {
     resource.setValue(subtitleContext.end());
     page.setResource(resource);
     if (logger.isDebugEnabled()) {
-      logger.info(
+      logger.debug(
           "Successfully converted SRT to EDM for record {}. Processed Annotations - {}",
           preview.getRecordId(),
           page.size());

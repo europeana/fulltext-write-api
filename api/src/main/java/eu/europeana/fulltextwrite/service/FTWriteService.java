@@ -8,6 +8,7 @@ import com.dotsub.converter.model.SubtitleItem;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.result.UpdateResult;
 import eu.europeana.fulltext.entity.TranslationAnnoPage;
+import eu.europeana.fulltext.entity.TranslationResource;
 import eu.europeana.fulltextwrite.exception.FTWriteConversionException;
 import eu.europeana.fulltextwrite.exception.InvalidFormatException;
 import eu.europeana.fulltextwrite.exception.SubtitleParsingException;
@@ -15,29 +16,39 @@ import eu.europeana.fulltextwrite.model.AnnotationPreview;
 import eu.europeana.fulltextwrite.model.SubtitleType;
 import eu.europeana.fulltextwrite.model.edm.FulltextPackage;
 import eu.europeana.fulltextwrite.model.external.AnnotationItem;
-import eu.europeana.fulltextwrite.repository.AnnotationRepository;
+import eu.europeana.fulltextwrite.repository.AnnoPageRepository;
 import eu.europeana.fulltextwrite.repository.ResourceRepository;
 import eu.europeana.fulltextwrite.util.EDMToFulltextConverter;
 import eu.europeana.fulltextwrite.util.FulltextWriteUtils;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AnnotationService {
+public class FTWriteService {
 
-  private final AnnotationRepository annotationRepository;
+  @Value("${spring.profiles.active:}")
+  private String activeProfileString;
+
+  private final AnnoPageRepository annotationRepository;
   private final ResourceRepository resourceRepository;
   private final SubtitleHandlerService subtitleHandlerService;
 
-  private static final Logger logger = LogManager.getLogger(AnnotationService.class);
+  private static final Logger logger = LogManager.getLogger(FTWriteService.class);
 
-  public AnnotationService(
-      AnnotationRepository annotationRepository,
+  /** Matches spring.profiles.active property in test/resource application.properties file */
+  public static final String ACTIVE_TEST_PROFILE = "test";
+
+  public FTWriteService(
+      AnnoPageRepository annotationRepository,
       ResourceRepository resourceRepository,
       SubtitleHandlerService subtitleHandlerService) {
     this.annotationRepository = annotationRepository;
@@ -72,45 +83,39 @@ public class AnnotationService {
         .build();
   }
 
-  public TranslationAnnoPage getAnnoPage(
-      String datasetId, String localId, String targetId, String lang, String pgId) {
-    return annotationRepository.getAnnoPage(datasetId, localId, targetId, lang, pgId);
+  /**
+   * Checks if a TranslationAnnoPage exists with the specified field combination. Uses targetId
+   * instead of pageId
+   */
+  public boolean annoPageExistsByTgtId(
+      String datasetId, String localId, String targetId, String lang) {
+    return annotationRepository.annoPageExistsByTgtId(datasetId, localId, targetId, lang);
   }
 
-  public boolean annoPageExists(String datasetId, String localId, String targetId, String lang) {
-    return annotationRepository.annoPageExists(datasetId, localId, targetId, lang);
+  /** Checks if a TranslationAnnoPage exists with the specified dsId, lcId, pgId and lang */
+  public boolean annoPageExistsByPgId(
+      String datasetId, String localId, String pageId, String lang) {
+    return annotationRepository.existsByPgId(datasetId, localId, pageId, lang);
   }
 
-  public TranslationAnnoPage getAnnoPageByPageIdLang(
+  /**
+   * Retrieves the AnnoPage with the specified dcId, lcId, pgId and lang
+   *
+   * @return AnnoPage or null if none found
+   */
+  public TranslationAnnoPage getAnnoPageByPgId(
       String datasetId, String localId, String pgId, String lang) {
     return annotationRepository.getAnnoPageByPageIdLang(datasetId, localId, pgId, lang);
   }
 
-  public boolean existsTranslationByPageIdLang(
-      String datasetId, String localId, String pageId, String lang) {
-    return annotationRepository.existsTranslationByPageIdLang(datasetId, localId, pageId, lang);
-  }
-
   /**
-   * Creates an AnnoPage from the AnnotationPreview object, saving it in the database
+   * Saves the given TranslationAnnoPage in the database.
    *
-   * @param annotationPreview
-   * @return
-   */
-  public TranslationAnnoPage createAndSaveAnnoPage(AnnotationPreview annotationPreview)
-      throws FTWriteConversionException {
-    TranslationAnnoPage annoPage = createAnnoPage(annotationPreview);
-    resourceRepository.saveResource(annoPage.getRes());
-    return annotationRepository.saveAnnoPage(annoPage);
-  }
-
-  /**
-   * Used only in test
-   * @param annoPage
+   * @param annoPage AnnoPage to save
    */
   public void saveAnnoPage(TranslationAnnoPage annoPage) {
     annotationRepository.saveAnnoPage(annoPage);
-    if(annoPage.getRes() != null) {
+    if (annoPage.getRes() != null) {
       resourceRepository.saveResource(annoPage.getRes());
     }
     logger.info("Saved annoPage to database - {} ", annoPage);
@@ -136,7 +141,10 @@ public class AnnotationService {
     return annoPage;
   }
 
-  public void deleteAnnoPage(String datasetId, String localId, String pageId, String lang) {
+  /**
+   * Deletes AnnoPage with the specified dsId, lcId, pgId and lang values. Can delete max 1 record.
+   */
+  public void deleteAnnoPages(String datasetId, String localId, String pageId, String lang) {
     resourceRepository.deleteResource(datasetId, localId, lang);
     annotationRepository.deleteAnnoPage(datasetId, localId, pageId, lang);
     logger.info(
@@ -147,6 +155,7 @@ public class AnnotationService {
         lang);
   }
 
+  /** Deletes AnnoPage(s) with the specified dsId, lcId and pgId. Could delete multiple records */
   public void deleteAnnoPages(String datasetId, String localId, String pageId) {
     long resourceCount = resourceRepository.deleteResources(datasetId, localId);
     long annoPageCount = annotationRepository.deleteAnnoPages(datasetId, localId, pageId);
@@ -192,41 +201,68 @@ public class AnnotationService {
   }
 
   public void upsertAnnoPage(List<? extends TranslationAnnoPage> annoPageList) {
-    BulkWriteResult writeResult = annotationRepository.upsertBulk(annoPageList);
+    Stream<TranslationResource> translationResourceStream =
+        annoPageList.stream().filter(Objects::nonNull).map(TranslationAnnoPage::getRes);
+
+    BulkWriteResult resourceWriteResult = resourceRepository.upsert(translationResourceStream);
+    if (logger.isDebugEnabled()) {
+      logger.debug(
+          "Saved resources to db: matched={}, modified={}, inserted={}",
+          resourceWriteResult.getMatchedCount(),
+          resourceWriteResult.getModifiedCount(),
+          resourceWriteResult.getInsertedCount());
+    }
+
+    BulkWriteResult annoPageWriteResult = annotationRepository.upsert(annoPageList);
     if (logger.isDebugEnabled()) {
       logger.debug(
           "Saved annoPages to db: matched={}, modified={}, inserted={}, annoPages={}",
-          writeResult.getMatchedCount(),
-          writeResult.getModifiedCount(),
-          writeResult.getInsertedCount(),
+          annoPageWriteResult.getMatchedCount(),
+          annoPageWriteResult.getModifiedCount(),
+          annoPageWriteResult.getInsertedCount(),
           getAnnoPageToString(annoPageList));
     }
   }
 
   /**
-   * AnnoPage will only be updated if, source field is passed OR if the new SRT was uploaded ie; the
-   * new subtitles were processed
-   *
-   * @param preview
-   * @return
+   * Checks if AnnoPage should be updated. AnnoPage will only be updated if source field is passed
+   * OR if the new SRT was uploaded ie; the new subtitles were processed
    */
   private boolean isAnnoPageUpdateRequired(AnnotationPreview preview) {
     return (StringUtils.isNotEmpty(preview.getSource()) || !preview.getSubtitleItems().isEmpty());
   }
 
-  public long count() {
+  /** Returns the number of TranslationAnnoPage records in the database */
+  public long countAnnoPage() {
     return annotationRepository.count();
   }
 
+  /** Returns the number of TranslationResource records in the database */
   public long countResource() {
     return resourceRepository.count();
   }
 
-  public void dropCollection() {
+  /**
+   * Drops the TranslationAnnoPage and TranslationResource collections. Can only be successfully
+   * invoked from tests
+   */
+  public void dropCollections() {
+    if (Arrays.stream(activeProfileString.split(",")).noneMatch(ACTIVE_TEST_PROFILE::equals)) {
+      throw new IllegalStateException(
+          String.format(
+              "Attempting to drop collections outside testing. activeProfiles=%s",
+              activeProfileString));
+    }
     annotationRepository.dropCollection();
     resourceRepository.dropCollection();
   }
 
+  /**
+   * Deletes TranslationAnnoPage(s) with the specified source
+   *
+   * @param source source to query
+   * @return number of deleted documents
+   */
   public long deleteAnnoPagesWithSource(String source) {
     long count = annotationRepository.deleteAnnoPagesWithSource(source);
     if (logger.isDebugEnabled()) {
@@ -236,7 +272,22 @@ public class AnnotationService {
     return count;
   }
 
+  /**
+   * Gets TranslationAnnoPage with the specified source. Only identifying properties (ie. dsId,
+   * lcId, pgId, tgId, lang) are populated.
+   *
+   * @param source source to query for
+   * @return TranslationAnnoPage
+   */
   public TranslationAnnoPage getShellAnnoPageBySource(String source) {
     return annotationRepository.getAnnoPageWithSource(source, false);
+  }
+
+  /** Creates an AnnoPage from the AnnotationPreview object, saving it in the database */
+  public TranslationAnnoPage createAndSaveAnnoPage(AnnotationPreview annotationPreview)
+      throws FTWriteConversionException {
+    TranslationAnnoPage annoPage = createAnnoPage(annotationPreview);
+    resourceRepository.saveResource(annoPage.getRes());
+    return annotationRepository.saveAnnoPage(annoPage);
   }
 }

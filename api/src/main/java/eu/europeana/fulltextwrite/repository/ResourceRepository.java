@@ -3,10 +3,22 @@ package eu.europeana.fulltextwrite.repository;
 import static dev.morphia.query.experimental.filters.Filters.eq;
 import static eu.europeana.fulltext.util.MorphiaUtils.Fields.*;
 import static eu.europeana.fulltextwrite.AppConstants.FULLTEXT_DATASTORE_BEAN;
+import static eu.europeana.fulltextwrite.AppConstants.RIGHTS;
+import static eu.europeana.fulltextwrite.AppConstants.VALUE;
+import static eu.europeana.fulltextwrite.repository.AnnoPageRepository.UPSERT_OPTS;
 
+import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.UpdateOneModel;
+import com.mongodb.client.model.WriteModel;
 import dev.morphia.Datastore;
 import eu.europeana.fulltext.entity.TranslationResource;
 import eu.europeana.fulltext.util.MorphiaUtils;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.bson.Document;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
@@ -52,5 +64,32 @@ public class ResourceRepository {
   /** Only for tests */
   public void dropCollection() {
     datastore.getMapper().getCollection(TranslationResource.class).drop();
+  }
+
+  public BulkWriteResult upsert(Stream<TranslationResource> translationResourceStream) {
+    MongoCollection<TranslationResource> resourceCollection =
+        datastore.getMapper().getCollection(TranslationResource.class);
+
+    List<WriteModel<TranslationResource>> resourceUpdates =
+        translationResourceStream.map(this::createResourceUpdate).collect(Collectors.toList());
+
+    return resourceCollection.bulkWrite(resourceUpdates);
+  }
+
+  private WriteModel<TranslationResource> createResourceUpdate(TranslationResource res) {
+    return new UpdateOneModel<>(
+        new Document(
+            // filter
+            Map.of(DATASET_ID, res.getDsId(), LOCAL_ID, res.getLcId(), LANGUAGE, res.getLang())),
+        // update doc
+        new Document(
+            "$set",
+            new Document(DATASET_ID, res.getDsId())
+                .append(LOCAL_ID, res.getLcId())
+                .append(LANGUAGE, res.getLang())
+                .append(VALUE, res.getValue())
+                .append(SOURCE, res.getSource())
+                .append(RIGHTS, res.getRights())),
+        UPSERT_OPTS);
   }
 }

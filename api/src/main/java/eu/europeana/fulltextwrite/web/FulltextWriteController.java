@@ -19,8 +19,8 @@ import eu.europeana.fulltextwrite.model.DeleteAnnoSyncResponse;
 import eu.europeana.fulltextwrite.model.DeleteAnnoSyncResponse.Status;
 import eu.europeana.fulltextwrite.model.SubtitleType;
 import eu.europeana.fulltextwrite.model.external.AnnotationItem;
-import eu.europeana.fulltextwrite.service.AnnotationService;
 import eu.europeana.fulltextwrite.service.AnnotationsApiRestService;
+import eu.europeana.fulltextwrite.service.FTWriteService;
 import eu.europeana.fulltextwrite.service.SubtitleHandlerService;
 import eu.europeana.fulltextwrite.util.FulltextWriteUtils;
 import io.swagger.annotations.ApiOperation;
@@ -57,7 +57,7 @@ public class FulltextWriteController extends BaseRest {
   private final SubtitleHandlerService subtitleHandlerService;
   private final AnnotationsApiRestService annotationsApiRestService;
 
-  private final AnnotationService annotationService;
+  private final FTWriteService ftWriteService;
 
   private final Predicate<String> annotationIdPattern;
 
@@ -65,11 +65,11 @@ public class FulltextWriteController extends BaseRest {
       AppSettings appSettings,
       SubtitleHandlerService subtitleHandlerService,
       AnnotationsApiRestService annotationsApiRestService,
-      AnnotationService annotationService) {
+      FTWriteService ftWriteService) {
     this.appSettings = appSettings;
     this.subtitleHandlerService = subtitleHandlerService;
     this.annotationsApiRestService = annotationsApiRestService;
-    this.annotationService = annotationService;
+    this.ftWriteService = ftWriteService;
     annotationIdPattern =
         Pattern.compile(
                 String.format(
@@ -100,8 +100,8 @@ public class FulltextWriteController extends BaseRest {
     if (itemOptional.isEmpty()) {
       // annotationItem not present, meaning 410 returned by Annotation API - so it has been deleted
 
-      TranslationAnnoPage annoPage = annotationService.getShellAnnoPageBySource(source);
-      long count = annotationService.deleteAnnoPagesWithSource(source);
+      TranslationAnnoPage annoPage = ftWriteService.getShellAnnoPageBySource(source);
+      long count = ftWriteService.deleteAnnoPagesWithSource(source);
 
       DeleteAnnoSyncResponse response =
           new DeleteAnnoSyncResponse(
@@ -121,12 +121,12 @@ public class FulltextWriteController extends BaseRest {
     }
 
     AnnotationPreview annotationPreview =
-        annotationService.createAnnotationPreview(itemOptional.get());
-    TranslationAnnoPage annoPage = annotationService.createAnnoPage(annotationPreview);
+        ftWriteService.createAnnotationPreview(itemOptional.get());
+    TranslationAnnoPage annoPage = ftWriteService.createAnnoPage(annotationPreview);
 
     // Morphia creates a new _id value if none exists, so we can't directly call save() – as this
     // could be an update.
-    annotationService.upsertAnnoPage(List.of(annoPage));
+    ftWriteService.upsertAnnoPage(List.of(annoPage));
 
     return generateResponse(request, serializeJsonLd(annoPage), HttpStatus.ACCEPTED);
   }
@@ -175,7 +175,7 @@ public class FulltextWriteController extends BaseRest {
      * Check if there is a fulltext annotation page associated with the combination of DATASET_ID,
      * LOCAL_ID and the media URL, if so then return a HTTP 301 with the URL of the Annotation Page
      */
-    if (annotationService.annoPageExists(datasetId, localId, media, lang)) {
+    if (ftWriteService.annoPageExistsByTgtId(datasetId, localId, media, lang)) {
       // return 301 redirect
       return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
           .location(
@@ -202,7 +202,7 @@ public class FulltextWriteController extends BaseRest {
     AnnotationPreview annotationPreview =
         createAnnotationPreview(
             datasetId, localId, lang, originalLang, rights, source, media, content, type);
-    AnnoPage savedAnnoPage = annotationService.createAndSaveAnnoPage(annotationPreview);
+    AnnoPage savedAnnoPage = ftWriteService.createAndSaveAnnoPage(annotationPreview);
     return generateResponse(request, serializeJsonLd(savedAnnoPage), HttpStatus.OK);
   }
 
@@ -249,8 +249,8 @@ public class FulltextWriteController extends BaseRest {
      * Check if there is a fulltext annotation page associated with the combination of DATASET_ID,
      * LOCAL_ID and the PAGE_ID and LANG, if not then return a HTTP 404
      */
-    TranslationAnnoPage annoPage =
-        annotationService.getAnnoPageByPageIdLang(datasetId, localId, pgId, lang);
+    TranslationAnnoPage annoPage = ftWriteService.getAnnoPageByPgId(datasetId, localId, pgId, lang);
+
     if (annoPage == null) {
       throw new AnnoPageDoesNotExistException(
           "Annotation page does not exits for "
@@ -279,7 +279,7 @@ public class FulltextWriteController extends BaseRest {
             content,
             type);
     TranslationAnnoPage updatedAnnoPage =
-        annotationService.updateAnnoPage(annotationPreview, annoPage);
+        ftWriteService.updateAnnoPage(annotationPreview, annoPage);
     return generateResponse(request, serializeJsonLd(updatedAnnoPage), HttpStatus.OK);
   }
 
@@ -308,19 +308,22 @@ public class FulltextWriteController extends BaseRest {
      * Check if there is a fulltext annotation page associated with the combination of DATASET_ID,
      * LOCAL_ID and the PAGE_ID and LANG (if provided), if not then return a HTTP 404
      */
-    if (!annotationService.existsTranslationByPageIdLang(datasetId, localId, pageId, lang)) {
+    if (!ftWriteService.annoPageExistsByPgId(datasetId, localId, pageId, lang)) {
       throw new AnnoPageDoesNotExistException(
           "Annotation page does not exits for "
               + appSettings.getFulltextApiUrl()
               + FulltextWriteUtils.getTranslationAnnoPageUrl(
                   new AnnoPage(datasetId, localId, pageId, null, lang, null)));
     }
-    // Delete the respective AnnotationPage(s) entry from MongoDB (if lang is omitted,
-    // the pages for all languages will be deleted);
+
+    /*
+     * Delete the respective AnnotationPage(s) entry from MongoDB (if lang is omitted, the pages for
+     * all languages will be deleted);
+     */
     if (StringUtils.isNotEmpty(lang)) {
-      annotationService.deleteAnnoPage(datasetId, localId, pageId, lang);
+      ftWriteService.deleteAnnoPages(datasetId, localId, pageId, lang);
     } else {
-      annotationService.deleteAnnoPages(datasetId, localId, pageId);
+      ftWriteService.deleteAnnoPages(datasetId, localId, pageId);
     }
     return noContentResponse(request);
   }

@@ -22,12 +22,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
 
-  @Autowired AnnotationService service;
+  @Autowired FTWriteService service;
   @Autowired ObjectMapper mapper;
 
   @BeforeEach
   void setUp() {
-    this.service.dropCollection();
+    this.service.dropCollections();
   }
 
   @Test
@@ -35,13 +35,13 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
     TranslationAnnoPage annoPage =
         mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
     service.saveAnnoPage(annoPage);
-    assertEquals(1, service.count());
+    assertEquals(1, service.countAnnoPage());
     assertEquals(1, service.countResource());
   }
 
   @Test
   void saveAnnoPageBulkShouldBeSuccessful() throws Exception {
-    assertEquals(0, service.count());
+    assertEquals(0, service.countAnnoPage());
 
     TranslationAnnoPage annoPage1 =
         mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
@@ -50,7 +50,7 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
 
     service.upsertAnnoPage(List.of(annoPage1, annoPage2));
 
-    assertEquals(2, service.count());
+    assertEquals(2, service.countAnnoPage());
   }
 
   @Test
@@ -60,7 +60,7 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
         mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
     service.saveAnnoPage(annoPage1);
 
-    assertEquals(1, service.count());
+    assertEquals(1, service.countAnnoPage());
 
     // load TranslationAnnoPage again as Morphia sets _id on object during save
     TranslationAnnoPage annoPage1Copy =
@@ -77,7 +77,7 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
 
     // try saving new annoPage (annoPage2) together with existing annoPage
     service.upsertAnnoPage(List.of(annoPage2, annoPage1Copy));
-    assertEquals(2, service.count());
+    assertEquals(2, service.countAnnoPage());
   }
 
   @Test
@@ -85,24 +85,24 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
     TranslationAnnoPage annoPage =
         mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
     service.saveAnnoPage(annoPage);
-    assertEquals(1, service.count());
+    assertEquals(1, service.countAnnoPage());
 
-    service.dropCollection();
+    service.dropCollections();
 
-    assertEquals(0, service.count());
+    assertEquals(0, service.countAnnoPage());
     assertEquals(0, service.countResource());
   }
 
   @Test
   void updateAnnoPageShouldBeSuccessful() throws IOException, FTWriteConversionException {
-    assertEquals(0, service.count());
+    assertEquals(0, service.countAnnoPage());
     assertEquals(0, service.countResource());
 
     // add the anno page and resource
     TranslationAnnoPage annoPage =
         mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
     service.saveAnnoPage(annoPage);
-    assertEquals(1, service.count());
+    assertEquals(1, service.countAnnoPage());
     assertEquals(1, service.countResource());
 
     String rights = annoPage.getRes().getRights() + "updated";
@@ -126,34 +126,34 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
     assertEquals(rights, updatedAnnopage.getRes().getRights());
     assertEquals(annoPage.getAns().size(), updatedAnnopage.getAns().size());
     assertEquals(annoPage.getLang(), updatedAnnopage.getLang());
-    assertEquals(1, service.count());
+    assertEquals(1, service.countAnnoPage());
     assertEquals(1, service.countResource());
   }
 
   @Test
   void deleteAnnoPageWithLangSuccessful() throws IOException {
 
-    assertEquals(0, service.count());
+    assertEquals(0, service.countAnnoPage());
     assertEquals(0, service.countResource());
 
     // add the anno page and resource
     TranslationAnnoPage annoPage =
         mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
     service.saveAnnoPage(annoPage);
-    assertEquals(1, service.count());
+    assertEquals(1, service.countAnnoPage());
     assertEquals(1, service.countResource());
 
-    service.deleteAnnoPage(
+    service.deleteAnnoPages(
         annoPage.getDsId(), annoPage.getLcId(), annoPage.getPgId(), annoPage.getLang());
 
-    assertEquals(0, service.count());
+    assertEquals(0, service.countAnnoPage());
     assertEquals(0, service.countResource());
   }
 
   @Test
   void deleteAnnoPageWithoutLangSuccessful() throws IOException {
 
-    assertEquals(0, service.count());
+    assertEquals(0, service.countAnnoPage());
     assertEquals(0, service.countResource());
 
     // add the anno page and resource with same dsId, lcId, pgId but different lang
@@ -163,12 +163,12 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
     annoPage =
         mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_EN_JSON), TranslationAnnoPage.class);
     service.saveAnnoPage(annoPage);
-    assertEquals(2, service.count());
+    assertEquals(2, service.countAnnoPage());
     assertEquals(2, service.countResource());
 
     service.deleteAnnoPages(annoPage.getDsId(), annoPage.getLcId(), annoPage.getPgId());
 
-    assertEquals(0, service.count());
+    assertEquals(0, service.countAnnoPage());
     assertEquals(0, service.countResource());
   }
 }

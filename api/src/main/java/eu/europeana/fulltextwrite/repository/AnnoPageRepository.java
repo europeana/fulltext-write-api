@@ -26,7 +26,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class AnnotationRepository {
+public class AnnoPageRepository {
 
   private final Datastore datastore;
 
@@ -34,11 +34,12 @@ public class AnnotationRepository {
   // ie. creates new records if they do not already exist, or updates them if they do.
   public static final UpdateOptions UPSERT_OPTS = new UpdateOptions().upsert(true);
 
-  public AnnotationRepository(@Qualifier(FULLTEXT_DATASTORE_BEAN) Datastore datastore) {
+  public AnnoPageRepository(@Qualifier(FULLTEXT_DATASTORE_BEAN) Datastore datastore) {
     this.datastore = datastore;
   }
 
-  public boolean annoPageExists(String datasetId, String localId, String targetId, String lang) {
+  public boolean annoPageExistsByTgtId(
+      String datasetId, String localId, String targetId, String lang) {
     return datastore
             .find(TranslationAnnoPage.class)
             .filter(
@@ -50,11 +51,12 @@ public class AnnotationRepository {
         > 0L;
   }
 
-  public boolean existsTranslationByPageIdLang(
-      String datasetId, String localId, String pageId, String lang) {
+  public boolean existsByPgId(String datasetId, String localId, String pageId, String lang) {
+
     List<Filter> filter =
         new ArrayList<>(
             Arrays.asList(eq(DATASET_ID, datasetId), eq(LOCAL_ID, localId), eq(PAGE_ID, pageId)));
+
     if (StringUtils.isNotEmpty(lang)) {
       filter.add(eq(LANGUAGE, lang));
     }
@@ -149,44 +151,19 @@ public class AnnotationRepository {
     return datastore.save(annoPage);
   }
 
-  public BulkWriteResult upsertBulk(List<? extends TranslationAnnoPage> annoPageList) {
-    MongoCollection<TranslationAnnoPage> collection =
+  public BulkWriteResult upsert(List<? extends TranslationAnnoPage> annoPageList) {
+    MongoCollection<TranslationAnnoPage> annoPageCollection =
         datastore.getMapper().getCollection(TranslationAnnoPage.class);
 
-    List<WriteModel<TranslationAnnoPage>> updates = new ArrayList<>();
+    List<WriteModel<TranslationAnnoPage>> annoPageUpdates = new ArrayList<>();
 
     Instant now = Instant.now();
 
     for (TranslationAnnoPage annoPage : annoPageList) {
-      Document updateDoc =
-          new Document(DATASET_ID, annoPage.getDsId())
-              .append(LOCAL_ID, annoPage.getLcId())
-              .append(PAGE_ID, annoPage.getPgId())
-              .append(TARGET_ID, annoPage.getTgtId())
-              .append(ANNOTATIONS, annoPage.getAns())
-              .append(MODIFIED, now)
-              .append(LANGUAGE, annoPage.getLang())
-              .append(SOURCE, annoPage.getSource())
-              .append(RESOURCE, annoPage.getRes());
-      // className discriminator no longer used
-
-      updates.add(
-          new UpdateOneModel<>(
-              new Document(
-                  Map.of(
-                      DATASET_ID,
-                      annoPage.getDsId(),
-                      LOCAL_ID,
-                      annoPage.getLcId(),
-                      LANGUAGE,
-                      annoPage.getLang(),
-                      PAGE_ID,
-                      annoPage.getPgId())),
-              new Document("$set", updateDoc),
-              UPSERT_OPTS));
+      annoPageUpdates.add(createAnnoPageUpdate(now, annoPage));
     }
 
-    return collection.bulkWrite(updates);
+    return annoPageCollection.bulkWrite(annoPageUpdates);
   }
 
   public long deleteAnnoPages(String datasetId, String localId, String pageId) {
@@ -231,7 +208,9 @@ public class AnnotationRepository {
 
     if (!fetchFullDoc) {
       findOptions =
-          findOptions.projection().include(DATASET_ID, LOCAL_ID, PAGE_ID, TARGET_ID, SOURCE);
+          findOptions
+              .projection()
+              .include(DATASET_ID, LOCAL_ID, PAGE_ID, TARGET_ID, LANGUAGE, SOURCE);
     }
 
     return datastore
@@ -239,5 +218,34 @@ public class AnnotationRepository {
         .filter(eq(SOURCE, source))
         .iterator(findOptions)
         .tryNext();
+  }
+
+  private UpdateOneModel<TranslationAnnoPage> createAnnoPageUpdate(
+      Instant now, TranslationAnnoPage annoPage) {
+    return new UpdateOneModel<>(
+        new Document(
+            // filter
+            Map.of(
+                DATASET_ID,
+                annoPage.getDsId(),
+                LOCAL_ID,
+                annoPage.getLcId(),
+                LANGUAGE,
+                annoPage.getLang(),
+                PAGE_ID,
+                annoPage.getPgId())),
+        // update doc
+        new Document(
+            "$set",
+            new Document(DATASET_ID, annoPage.getDsId())
+                .append(LOCAL_ID, annoPage.getLcId())
+                .append(PAGE_ID, annoPage.getPgId())
+                .append(TARGET_ID, annoPage.getTgtId())
+                .append(ANNOTATIONS, annoPage.getAns())
+                .append(MODIFIED, now)
+                .append(LANGUAGE, annoPage.getLang())
+                .append(SOURCE, annoPage.getSource())
+                .append(RESOURCE, annoPage.getRes())),
+        UPSERT_OPTS);
   }
 }
