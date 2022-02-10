@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europeana.fulltext.entity.TranslationAnnoPage;
 import eu.europeana.fulltextwrite.BaseIntegrationTest;
 import eu.europeana.fulltextwrite.IntegrationTestUtils;
-import eu.europeana.fulltextwrite.service.AnnotationService;
+import eu.europeana.fulltextwrite.service.FTWriteService;
 import eu.europeana.fulltextwrite.util.FulltextWriteUtils;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,7 +41,7 @@ class AnnoSyncIT extends BaseIntegrationTest {
   private static String serverBaseUrl;
 
   @Autowired private WebApplicationContext webApplicationContext;
-  @Autowired AnnotationService annoPageService;
+  @Autowired FTWriteService annoPageService;
   private MockMvc mockMvc;
 
   private static final List<String> DELETED_ANNOTATION_IDS = new ArrayList<>();
@@ -111,7 +111,7 @@ class AnnoSyncIT extends BaseIntegrationTest {
   @BeforeEach
   void setUp() {
     this.mockMvc = MockMvcBuilders.webAppContextSetup(this.webApplicationContext).build();
-    this.annoPageService.dropCollection();
+    this.annoPageService.dropCollections();
   }
 
   @Test

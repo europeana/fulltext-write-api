@@ -3,7 +3,7 @@ package eu.europeana.fulltextwrite.batch.processor;
 import eu.europeana.fulltext.entity.TranslationAnnoPage;
 import eu.europeana.fulltextwrite.model.AnnotationPreview;
 import eu.europeana.fulltextwrite.model.external.AnnotationItem;
-import eu.europeana.fulltextwrite.service.AnnotationService;
+import eu.europeana.fulltextwrite.service.FTWriteService;
 import eu.europeana.fulltextwrite.service.SubtitleHandlerService;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.lang.NonNull;
@@ -13,10 +13,10 @@ import org.springframework.stereotype.Component;
 public class AnnotationProcessor implements ItemProcessor<AnnotationItem, TranslationAnnoPage> {
 
   private final SubtitleHandlerService subtitleHandlerService;
-  private final AnnotationService annotationService;
+  private final FTWriteService annotationService;
 
   public AnnotationProcessor(
-      SubtitleHandlerService subtitleHandlerService, AnnotationService annotationService) {
+      SubtitleHandlerService subtitleHandlerService, FTWriteService annotationService) {
     this.subtitleHandlerService = subtitleHandlerService;
     this.annotationService = annotationService;
   }

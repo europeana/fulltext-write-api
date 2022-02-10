@@ -2,9 +2,7 @@ package eu.europeana.fulltextwrite.exception;
 
 import eu.europeana.api.commons.error.EuropeanaApiException;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 public class FTWriteInstantiationException extends EuropeanaApiException {
   /**
    * Initialise a new exception for which there is no root cause
@@ -33,5 +31,10 @@ public class FTWriteInstantiationException extends EuropeanaApiException {
   @Override
   public boolean doLogStacktrace() {
     return false;
+  }
+
+  @Override
+  public HttpStatus getResponseStatus() {
+    return HttpStatus.INTERNAL_SERVER_ERROR;
   }
 }

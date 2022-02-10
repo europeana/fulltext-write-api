@@ -1,7 +1,7 @@
 package eu.europeana.fulltextwrite.batch.writer;
 
 import eu.europeana.fulltext.entity.TranslationAnnoPage;
-import eu.europeana.fulltextwrite.service.AnnotationService;
+import eu.europeana.fulltextwrite.service.FTWriteService;
 import java.util.List;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.lang.NonNull;
@@ -10,9 +10,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class AnnoPageWriter implements ItemWriter<TranslationAnnoPage> {
 
-  private final AnnotationService annotationService;
+  private final FTWriteService annotationService;
 
-  public AnnoPageWriter(AnnotationService annotationService) {
+  public AnnoPageWriter(FTWriteService annotationService) {
     this.annotationService = annotationService;
   }
 

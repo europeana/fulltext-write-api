@@ -2,21 +2,15 @@ package eu.europeana.fulltextwrite.exception;
 
 import eu.europeana.api.commons.error.EuropeanaApiException;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-/**
- * An exception to demonstrate error handling with ResponseStatus annotation It's recommended that
- * all exceptions changeType in the API extends the EuropeanaApiException
- */
-@ResponseStatus(HttpStatus.BAD_REQUEST)
-public class DummyException extends EuropeanaApiException {
+public class AnnoPageDoesNotExistException extends EuropeanaApiException {
 
   /**
    * Initialise a new exception for which there is no root cause
    *
    * @param msg error message
    */
-  public DummyException(String msg) {
+  public AnnoPageDoesNotExistException(String msg) {
     super(msg);
   }
 
@@ -26,7 +20,7 @@ public class DummyException extends EuropeanaApiException {
    * @param msg error message
    * @param errorCode error code
    */
-  public DummyException(String msg, String errorCode) {
+  public AnnoPageDoesNotExistException(String msg, String errorCode) {
     super(msg, errorCode);
   }
 
@@ -38,5 +32,10 @@ public class DummyException extends EuropeanaApiException {
   @Override
   public boolean doLogStacktrace() {
     return false;
+  }
+
+  @Override
+  public HttpStatus getResponseStatus() {
+    return HttpStatus.NOT_FOUND;
   }
 }

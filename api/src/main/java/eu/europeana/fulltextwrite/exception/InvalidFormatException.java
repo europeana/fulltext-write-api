@@ -2,9 +2,7 @@ package eu.europeana.fulltextwrite.exception;
 
 import eu.europeana.api.commons.error.EuropeanaApiException;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(HttpStatus.BAD_REQUEST)
 public class InvalidFormatException extends EuropeanaApiException {
   /**
    * Initialise a new exception for which there is no root cause
@@ -33,5 +31,10 @@ public class InvalidFormatException extends EuropeanaApiException {
   @Override
   public boolean doLogStacktrace() {
     return false;
+  }
+
+  @Override
+  public HttpStatus getResponseStatus() {
+    return HttpStatus.BAD_REQUEST;
   }
 }

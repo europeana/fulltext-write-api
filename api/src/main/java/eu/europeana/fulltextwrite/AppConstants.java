@@ -20,4 +20,11 @@ public class AppConstants {
   public static final Configuration defaultSubtitleConfig = new Configuration();
 
   public static final String CONTENT_TYPE_VTT = "text/vtt";
+
+  // Mongo Constants
+  public static final String MONGO_LOCAL_FIELD = "localField";
+  public static final String MONGO_FOREIGN_FIELD = "foreignField";
+  public static final String MONGO_RESOURCE_REF_ID = "res.$id";
+  public static final String RIGHTS = "rights";
+  public static final String VALUE = "value";
 }
