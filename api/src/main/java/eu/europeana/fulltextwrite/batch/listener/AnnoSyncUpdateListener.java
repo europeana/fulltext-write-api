@@ -12,8 +12,8 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AnnoSyncItemListener extends ItemListenerSupport<AnnotationItem, AnnoPage> {
-  private static final Logger logger = LogManager.getLogger(AnnoSyncItemListener.class);
+public class AnnoSyncUpdateListener extends ItemListenerSupport<AnnotationItem, AnnoPage> {
+  private static final Logger logger = LogManager.getLogger(AnnoSyncUpdateListener.class);
 
   @Override
   public void onReadError(@NonNull Exception e) {

@@ -4,9 +4,11 @@ import static eu.europeana.fulltextwrite.AppConstants.ANNO_SYNC_TASK_EXECUTOR;
 import static eu.europeana.fulltextwrite.batch.BatchUtils.ANNO_SYNC_JOB;
 
 import eu.europeana.fulltext.entity.TranslationAnnoPage;
+import eu.europeana.fulltextwrite.batch.listener.AnnoSyncUpdateListener;
 import eu.europeana.fulltextwrite.batch.processor.AnnotationProcessor;
 import eu.europeana.fulltextwrite.batch.reader.ItemReaderConfig;
-import eu.europeana.fulltextwrite.batch.writer.AnnoPageWriter;
+import eu.europeana.fulltextwrite.batch.writer.AnnoPageDeletionWriter;
+import eu.europeana.fulltextwrite.batch.writer.AnnoPageUpsertWriter;
 import eu.europeana.fulltextwrite.config.AppSettings;
 import eu.europeana.fulltextwrite.model.external.AnnotationItem;
 import java.time.Instant;
@@ -17,8 +19,6 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.explore.JobExplorer;
-import org.springframework.batch.core.step.skip.SkipPolicy;
-import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -39,12 +39,12 @@ public class AnnotationSyncJobConfig {
   private final ItemReaderConfig itemReaderConfig;
 
   private final AnnotationProcessor annotationProcessor;
-  private final AnnoPageWriter annoPageWriter;
+  private final AnnoPageUpsertWriter annoPageWriter;
+  private final AnnoPageDeletionWriter annoPageDeletionWriter;
+
+  private final AnnoSyncUpdateListener updateListener;
 
   private final TaskExecutor annoSyncTaskExecutor;
-
-  /** SkipPolicy to ignore all failures when executing jobs, as they can be handled later */
-  private static final SkipPolicy noopSkipPolicy = (Throwable t, int skipCount) -> true;
 
   public AnnotationSyncJobConfig(
       AppSettings appSettings,
@@ -53,7 +53,9 @@ public class AnnotationSyncJobConfig {
       JobExplorer jobExplorer,
       ItemReaderConfig itemReaderConfig,
       AnnotationProcessor annotationProcessor,
-      AnnoPageWriter annoPageWriter,
+      AnnoPageUpsertWriter annoPageWriter,
+      AnnoPageDeletionWriter annoPageDeletionWriter,
+      AnnoSyncUpdateListener updateListener,
       @Qualifier(ANNO_SYNC_TASK_EXECUTOR) TaskExecutor annoSyncTaskExecutor) {
     this.appSettings = appSettings;
     this.jobBuilderFactory = jobBuilderFactory;
@@ -62,6 +64,8 @@ public class AnnotationSyncJobConfig {
     this.itemReaderConfig = itemReaderConfig;
     this.annotationProcessor = annotationProcessor;
     this.annoPageWriter = annoPageWriter;
+    this.annoPageDeletionWriter = annoPageDeletionWriter;
+    this.updateListener = updateListener;
     this.annoSyncTaskExecutor = annoSyncTaskExecutor;
   }
 
@@ -73,20 +77,23 @@ public class AnnotationSyncJobConfig {
         .processor(annotationProcessor)
         .writer(annoPageWriter)
         .faultTolerant()
-        .skipPolicy(noopSkipPolicy)
+        .skipLimit(appSettings.getBatchSkipLimit())
         .taskExecutor(annoSyncTaskExecutor)
         .throttleLimit(appSettings.getAnnoSyncThrottleLimit())
+        .listener(updateListener)
         .build();
   }
 
-  public Step deleteAnnotationsStep() {
+  private Step deleteAnnotationsStep(Instant from, Instant to) {
     return this.stepBuilderFactory
-        .get("deleteAnnoStep")
-        .tasklet(
-            (contribution, chunkContext) -> {
-              logger.info("Annotations deletion yet to be implemented");
-              return RepeatStatus.FINISHED;
-            })
+        .get("deleteAnnotationsStep")
+        .<String, String>chunk(appSettings.getAnnotationItemsPageSize())
+        .reader(itemReaderConfig.createDeletedAnnotationReader(from, to))
+        .writer(annoPageDeletionWriter)
+        .faultTolerant()
+        .skipLimit(appSettings.getBatchSkipLimit())
+        .taskExecutor(annoSyncTaskExecutor)
+        .throttleLimit(appSettings.getAnnoSyncThrottleLimit())
         .build();
   }
 
@@ -102,7 +109,7 @@ public class AnnotationSyncJobConfig {
     return this.jobBuilderFactory
         .get(ANNO_SYNC_JOB)
         .start(syncAnnotationsStep(from, to))
-        .next(deleteAnnotationsStep())
+        .start(deleteAnnotationsStep(from, to))
         .build();
   }
 }

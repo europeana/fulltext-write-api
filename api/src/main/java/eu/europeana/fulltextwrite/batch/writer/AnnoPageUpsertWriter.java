@@ -8,11 +8,11 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AnnoPageWriter implements ItemWriter<TranslationAnnoPage> {
+public class AnnoPageUpsertWriter implements ItemWriter<TranslationAnnoPage> {
 
   private final FTWriteService annotationService;
 
-  public AnnoPageWriter(FTWriteService annotationService) {
+  public AnnoPageUpsertWriter(FTWriteService annotationService) {
     this.annotationService = annotationService;
   }
 

@@ -5,13 +5,16 @@ import eu.europeana.fulltextwrite.exception.AnnotationGoneException;
 import eu.europeana.fulltextwrite.exception.AnnotationNotFoundException;
 import eu.europeana.fulltextwrite.model.external.AnnotationItem;
 import eu.europeana.fulltextwrite.model.external.AnnotationSearchResponse;
-import eu.europeana.fulltextwrite.util.FulltextWriteUtils;
 import io.netty.handler.logging.LogLevel;
 import java.net.URI;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.core.ParameterizedTypeReference;
@@ -22,6 +25,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriBuilder;
 import reactor.core.Exceptions;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.transport.logging.AdvancedByteBufFormat;
@@ -30,6 +34,10 @@ import reactor.netty.transport.logging.AdvancedByteBufFormat;
 public class AnnotationsApiRestService {
   private final WebClient webClient;
   private static final Logger logger = LogManager.getLogger(AnnotationsApiRestService.class);
+
+  /** Date format used by Annotation API for to and from param in deleted endpoint */
+  private static final DateFormat ANNOTATION_QUERY_DATE_FORMAT =
+      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
   private final String wskey;
 
@@ -86,17 +94,8 @@ public class AnnotationsApiRestService {
     return items;
   }
 
-  private String generateQuery(@Nullable Instant from, @NonNull Instant to) {
-    // if from is null, fetch from the earliest representable time
-    String fromString = from != null ? from.toString() : "*";
-    String toString = to.toString();
-
-    String queryString = "generated:[" + fromString + " TO " + toString + "]";
-    // escape colons in dates, as the colon is a special character to Solr's parser
-    return queryString.replace(":", "\\:");
-  }
-
-  public Optional<AnnotationItem> retrieveAnnotation(String annotationId) {
+  public Optional<AnnotationItem> retrieveAnnotation(String annotationId)
+      throws AnnotationNotFoundException {
     // add wskey to request
     String uri = annotationId + "?wskey=" + wskey;
 
@@ -125,9 +124,14 @@ public class AnnotationsApiRestService {
        **/
       Throwable t = Exceptions.unwrap(e);
 
-      // return empty optional if annotation doesn't exist on Annotation API
+      // return empty optional if annotation has been deleted on Annotation API
       if (t instanceof AnnotationGoneException) {
         return Optional.empty();
+      }
+
+      if (t instanceof AnnotationNotFoundException) {
+        // rethrow Not Found error so @ControllerAdvice can handle it correctly
+        throw new AnnotationNotFoundException("Annotation does not exist");
       }
 
       // all other exceptions should be propagated
@@ -135,23 +139,49 @@ public class AnnotationsApiRestService {
     }
   }
 
-  public boolean isAnnotationDeleted(String annotationId) {
-    String url = FulltextWriteUtils.getDeletedEndpoint(annotationId) + "?wskey=" + wskey;
+  public List<String> getDeletedAnnotations(int page, int pageSize, Instant from, Instant to) {
+    return webClient
+        .get()
+        .uri(buildUriForDeletedAnnotations(page, pageSize, from, to))
+        .accept(MediaType.APPLICATION_JSON)
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<List<String>>() {})
+        .block();
+  }
 
-    List<String> annotationIds =
-        webClient
-            .get()
-            .uri(URI.create(url))
-            .accept(MediaType.APPLICATION_JSON)
-            .retrieve()
-            .bodyToMono(new ParameterizedTypeReference<List<String>>() {})
-            .block();
+  private String generateQuery(@Nullable Instant from, @NonNull Instant to) {
+    // if from is null, fetch from the earliest representable time
+    String fromString = from != null ? from.toString() : "*";
+    String toString = to.toString();
 
-    if (annotationIds != null) {
-      return annotationIds.contains(annotationId);
-    }
+    String queryString = "generated:[" + fromString + " TO " + toString + "]";
+    // escape colons in dates, as the colon is a special character to Solr's parser
+    return queryString.replace(":", "\\:");
+  }
 
-    // annotation not deleted, so return false
-    return false;
+  /**
+   * Helper method for constructing request URI. Only includes "from" and "to" parameters if not
+   * null.
+   */
+  private Function<UriBuilder, URI> buildUriForDeletedAnnotations(
+      int page, int pageSize, Instant from, Instant to) {
+    return uriBuilder -> {
+      UriBuilder builder =
+          uriBuilder
+              .path("/annotations/deleted")
+              .queryParam("wskey", wskey)
+              .queryParam("page", page)
+              .queryParam("limit", pageSize);
+
+      if (from != null) {
+        builder.queryParam("from", ANNOTATION_QUERY_DATE_FORMAT.format(Date.from(from)));
+      }
+
+      if (to != null) {
+        builder.queryParam("to", ANNOTATION_QUERY_DATE_FORMAT.format(Date.from(to)));
+      }
+
+      return builder.build();
+    };
   }
 }

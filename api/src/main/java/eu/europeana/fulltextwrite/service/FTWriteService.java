@@ -260,13 +260,13 @@ public class FTWriteService {
   /**
    * Deletes TranslationAnnoPage(s) with the specified source
    *
-   * @param source source to query
+   * @param sources sources to query
    * @return number of deleted documents
    */
-  public long deleteAnnoPagesWithSource(String source) {
-    long count = annotationRepository.deleteAnnoPagesWithSource(source);
+  public long deleteAnnoPagesWithSources(List<? extends String> sources) {
+    long count = annotationRepository.deleteAnnoPagesWithSources(sources);
     if (logger.isDebugEnabled()) {
-      logger.debug("Deleted {} AnnoPages for source {}", count, source);
+      logger.debug("Deleted {} AnnoPages for sources {}", count, sources);
     }
 
     return count;
