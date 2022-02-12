@@ -40,8 +40,8 @@ class FulltextWriteControllerIT extends BaseIntegrationTest {
   @BeforeEach
   void setUp() {
     this.mockMvc = MockMvcBuilders.webAppContextSetup(this.webApplicationContext).build();
-    this.annotationRepository.dropCollection();
-    this.resourceRepository.dropCollection();
+    this.annotationRepository.deleteAll();
+    this.resourceRepository.deleteAll();
   }
 
   // TODO - check DB data in all test

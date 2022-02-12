@@ -2,6 +2,7 @@ package eu.europeana.fulltextwrite.service;
 
 import static eu.europeana.fulltextwrite.IntegrationTestUtils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.europeana.fulltext.entity.Annotation;
@@ -37,6 +38,18 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
     service.saveAnnoPage(annoPage);
     assertEquals(1, service.countAnnoPage());
     assertEquals(1, service.countResource());
+  }
+
+  @Test
+  void annoPageRetrievalShouldBeSuccessful() throws Exception {
+    TranslationAnnoPage annoPage =
+        mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
+    service.saveAnnoPage(annoPage);
+
+    TranslationAnnoPage retrievedAnnoPage =
+        service.getAnnoPageByPgId("08604", "FDE2205EEE384218A8D986E5138F9691", "1", "nl");
+
+    assertNotNull(retrievedAnnoPage.getRes());
   }
 
   @Test

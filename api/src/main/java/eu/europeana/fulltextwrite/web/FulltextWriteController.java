@@ -37,6 +37,8 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -57,6 +59,8 @@ public class FulltextWriteController extends BaseRest {
   private final AppSettings appSettings;
   private final SubtitleHandlerService subtitleHandlerService;
   private final AnnotationsApiRestService annotationsApiRestService;
+
+  private static final Logger logger = LogManager.getLogger(FulltextWriteController.class);
 
   private final FTWriteService ftWriteService;
 
@@ -177,6 +181,11 @@ public class FulltextWriteController extends BaseRest {
      * LOCAL_ID and the media URL, if so then return a HTTP 301 with the URL of the Annotation Page
      */
     if (ftWriteService.annoPageExistsByTgtId(datasetId, localId, media, lang)) {
+      if (logger.isDebugEnabled()) {
+        logger.debug(
+            "AnnoPage already exists for subtitle, redirecting to {}",
+            appSettings.getFulltextApiUrl());
+      }
       // return 301 redirect
       return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
           .location(
@@ -204,6 +213,10 @@ public class FulltextWriteController extends BaseRest {
         createAnnotationPreview(
             datasetId, localId, lang, originalLang, rights, source, media, content, type);
     AnnoPage savedAnnoPage = ftWriteService.createAndSaveAnnoPage(annotationPreview);
+
+    if (logger.isDebugEnabled()) {
+      logger.debug("Created new AnnoPage {}", savedAnnoPage);
+    }
     return generateResponse(request, serializeJsonLd(savedAnnoPage), HttpStatus.OK);
   }
 
@@ -281,6 +294,9 @@ public class FulltextWriteController extends BaseRest {
             type);
     TranslationAnnoPage updatedAnnoPage =
         ftWriteService.updateAnnoPage(annotationPreview, annoPage);
+    if (logger.isDebugEnabled()) {
+      logger.debug("Replaced AnnoPage {}", updatedAnnoPage);
+    }
     return generateResponse(request, serializeJsonLd(updatedAnnoPage), HttpStatus.OK);
   }
 
@@ -319,12 +335,15 @@ public class FulltextWriteController extends BaseRest {
 
     /*
      * Delete the respective AnnotationPage(s) entry from MongoDB (if lang is omitted, the pages for
-     * all languages will be deleted);
+     * all languages will be deleted)
      */
     if (StringUtils.isNotEmpty(lang)) {
       ftWriteService.deleteAnnoPages(datasetId, localId, pageId, lang);
     } else {
       ftWriteService.deleteAnnoPages(datasetId, localId, pageId);
+    }
+    if (logger.isDebugEnabled()) {
+      logger.debug("Deleted AnnoPage(s) for {}/{}/{}?lang={}", datasetId, localId, pageId, lang);
     }
     return noContentResponse(request);
   }

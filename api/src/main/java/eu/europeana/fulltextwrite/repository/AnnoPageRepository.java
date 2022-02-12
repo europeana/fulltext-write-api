@@ -188,8 +188,8 @@ public class AnnoPageRepository {
   }
 
   /** Only for tests */
-  public void dropCollection() {
-    datastore.getMapper().getCollection(TranslationAnnoPage.class).drop();
+  public void deleteAll() {
+    datastore.find(TranslationAnnoPage.class).delete(MorphiaUtils.MULTI_DELETE_OPTS);
   }
 
   public long count() {

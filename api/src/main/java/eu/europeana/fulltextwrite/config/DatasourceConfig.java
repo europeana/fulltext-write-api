@@ -8,7 +8,6 @@ import com.mongodb.client.MongoClients;
 import dev.morphia.Datastore;
 import dev.morphia.Morphia;
 import eu.europeana.batch.entity.PackageMapper;
-import eu.europeana.fulltext.entity.AnnoPage;
 import eu.europeana.fulltext.util.MorphiaUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,17 +36,10 @@ public class DatasourceConfig {
     logger.info("Configuring fulltext database: {}", fulltextDatabase);
 
     // use same Morphia settings as Fulltext API
-    Datastore datastore =
-        Morphia.createDatastore(mongoClient, fulltextDatabase, MorphiaUtils.MAPPER_OPTIONS);
 
-    // Indices aren't changeType unless Entity classes are explicitly mapped. Only required for
-    // development, as indices already exist on production db
-    if (settings.ensureFulltextIndices()) {
-      datastore.getMapper().mapPackage(AnnoPage.class.getPackageName());
-      datastore.ensureIndexes();
-    }
-
-    return datastore;
+    // TODO ensure indexes when TranslationAnnoPage no longer inherits index definitions from
+    // AnnoPage
+    return Morphia.createDatastore(mongoClient, fulltextDatabase, MorphiaUtils.MAPPER_OPTIONS);
   }
 
   @Bean(SPRINGBATCH_DATASTORE_BEAN)

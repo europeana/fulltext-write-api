@@ -145,14 +145,16 @@ public class FTWriteService {
    * Deletes AnnoPage with the specified dsId, lcId, pgId and lang values. Can delete max 1 record.
    */
   public void deleteAnnoPages(String datasetId, String localId, String pageId, String lang) {
-    resourceRepository.deleteResource(datasetId, localId, lang);
-    annotationRepository.deleteAnnoPage(datasetId, localId, pageId, lang);
+    long resourceCount = resourceRepository.deleteResource(datasetId, localId, lang);
+    long annoPageCount = annotationRepository.deleteAnnoPage(datasetId, localId, pageId, lang);
     logger.info(
-        "AnnoPage and Resource with datasetId={}, localId={}, pageId={}, lang={} are deleted",
+        "AnnoPage and Resource with datasetId={}, localId={}, pageId={}, lang={} are deleted. resourceCount={}, annoPageCount={}",
         datasetId,
         localId,
         pageId,
-        lang);
+        lang,
+        resourceCount,
+        annoPageCount);
   }
 
   /** Deletes AnnoPage(s) with the specified dsId, lcId and pgId. Could delete multiple records */
@@ -253,8 +255,8 @@ public class FTWriteService {
               "Attempting to drop collections outside testing. activeProfiles=%s",
               activeProfileString));
     }
-    annotationRepository.dropCollection();
-    resourceRepository.dropCollection();
+    annotationRepository.deleteAll();
+    resourceRepository.deleteAll();
   }
 
   /**
