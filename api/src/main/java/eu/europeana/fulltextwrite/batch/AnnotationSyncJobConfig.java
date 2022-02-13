@@ -19,6 +19,7 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.explore.JobExplorer;
+import org.springframework.batch.core.step.skip.SkipPolicy;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -45,6 +46,9 @@ public class AnnotationSyncJobConfig {
   private final AnnoSyncUpdateListener updateListener;
 
   private final TaskExecutor annoSyncTaskExecutor;
+
+  /** SkipPolicy to ignore all failures when executing jobs, as they can be handled later */
+  private static final SkipPolicy noopSkipPolicy = (Throwable t, int skipCount) -> true;
 
   public AnnotationSyncJobConfig(
       AppSettings appSettings,
@@ -77,7 +81,7 @@ public class AnnotationSyncJobConfig {
         .processor(annotationProcessor)
         .writer(annoPageWriter)
         .faultTolerant()
-        .skipLimit(appSettings.getBatchSkipLimit())
+        .skipPolicy(noopSkipPolicy)
         .taskExecutor(annoSyncTaskExecutor)
         .throttleLimit(appSettings.getAnnoSyncThrottleLimit())
         .listener(updateListener)
@@ -91,7 +95,7 @@ public class AnnotationSyncJobConfig {
         .reader(itemReaderConfig.createDeletedAnnotationReader(from, to))
         .writer(annoPageDeletionWriter)
         .faultTolerant()
-        .skipLimit(appSettings.getBatchSkipLimit())
+        .skipPolicy(noopSkipPolicy)
         .taskExecutor(annoSyncTaskExecutor)
         .throttleLimit(appSettings.getAnnoSyncThrottleLimit())
         .build();
@@ -109,7 +113,7 @@ public class AnnotationSyncJobConfig {
     return this.jobBuilderFactory
         .get(ANNO_SYNC_JOB)
         .start(syncAnnotationsStep(from, to))
-        .start(deleteAnnotationsStep(from, to))
+        .next(deleteAnnotationsStep(from, to))
         .build();
   }
 }

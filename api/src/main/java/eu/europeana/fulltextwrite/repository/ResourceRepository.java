@@ -62,8 +62,8 @@ public class ResourceRepository {
   }
 
   /** Only for tests */
-  public void dropCollection() {
-    datastore.getMapper().getCollection(TranslationResource.class).drop();
+  public void deleteAll() {
+    datastore.find(TranslationResource.class).delete(MorphiaUtils.MULTI_DELETE_OPTS);
   }
 
   public BulkWriteResult upsert(Stream<TranslationResource> translationResourceStream) {
