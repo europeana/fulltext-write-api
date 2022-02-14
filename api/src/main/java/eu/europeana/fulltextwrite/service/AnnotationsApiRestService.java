@@ -10,6 +10,8 @@ import java.net.URI;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -140,23 +142,33 @@ public class AnnotationsApiRestService {
   }
 
   public List<String> getDeletedAnnotations(int page, int pageSize, Instant from, Instant to) {
-    return webClient
-        .get()
-        .uri(buildUriForDeletedAnnotations(page, pageSize, from, to))
-        .accept(MediaType.APPLICATION_JSON)
-        .retrieve()
-        .bodyToMono(new ParameterizedTypeReference<List<String>>() {})
-        .block();
+    List<String> deletedAnnotations =
+        webClient
+            .get()
+            .uri(buildUriForDeletedAnnotations(page, pageSize, from, to))
+            .accept(MediaType.APPLICATION_JSON)
+            .retrieve()
+            .bodyToMono(new ParameterizedTypeReference<List<String>>() {})
+            .block();
+
+    if (logger.isDebugEnabled()) {
+      logger.debug("Retrieved deleted annotations ids={}", deletedAnnotations);
+    }
+    return deletedAnnotations;
   }
 
   private String generateQuery(@Nullable Instant from, @NonNull Instant to) {
-    // if from is null, fetch from the earliest representable time
-    String fromString = from != null ? from.toString() : "*";
-    String toString = to.toString();
+    /*
+     * if 'from' is null, fetch from the earliest representable time
+     *
+     * Annotation API query doesn't account for time zones. Deduct 1hr from "from" time so we don't
+     * miss any updates (TODO: make this configurable)
+     */
 
-    String queryString = "generated:[" + fromString + " TO " + toString + "]";
-    // escape colons in dates, as the colon is a special character to Solr's parser
-    return queryString.replace(":", "\\:");
+    String fromString = from != null ? toSolrDateString(from.minus(1, ChronoUnit.HOURS)) : "*";
+    String toString = toSolrDateString(to);
+
+    return "generated:[" + fromString + " TO " + toString + "]";
   }
 
   /**
@@ -173,8 +185,13 @@ public class AnnotationsApiRestService {
               .queryParam("page", page)
               .queryParam("limit", pageSize);
 
+      // Annotation API query doesn't account for time zones. Deduct 1hr from "from" time so we
+      // don't miss any updates (TODO: make this configurable)
+
       if (from != null) {
-        builder.queryParam("from", ANNOTATION_QUERY_DATE_FORMAT.format(Date.from(from)));
+        builder.queryParam(
+            "from",
+            ANNOTATION_QUERY_DATE_FORMAT.format(Date.from(from.minus(1, ChronoUnit.HOURS))));
       }
 
       if (to != null) {
@@ -183,5 +200,13 @@ public class AnnotationsApiRestService {
 
       return builder.build();
     };
+  }
+
+  private String toSolrDateString(Instant instant) {
+    /*
+     * escape colons in dates, as the colon is a special character to Solr's parser
+     * See: https://solr.apache.org/guide/6_6/working-with-dates.html#WorkingwithDates-DateFormatting
+     */
+    return instant.atZone(ZoneOffset.UTC).toString().replace(":", "\\:");
   }
 }
