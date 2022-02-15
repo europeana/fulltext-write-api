@@ -7,13 +7,10 @@ import eu.europeana.fulltextwrite.model.external.AnnotationItem;
 import eu.europeana.fulltextwrite.model.external.AnnotationSearchResponse;
 import io.netty.handler.logging.LogLevel;
 import java.net.URI;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -38,8 +35,7 @@ public class AnnotationsApiRestService {
   private static final Logger logger = LogManager.getLogger(AnnotationsApiRestService.class);
 
   /** Date format used by Annotation API for to and from param in deleted endpoint */
-  private static final DateFormat ANNOTATION_QUERY_DATE_FORMAT =
-      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+  DateTimeFormatter deletedDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
   private final String wskey;
 
@@ -160,12 +156,9 @@ public class AnnotationsApiRestService {
   private String generateQuery(@Nullable Instant from, @NonNull Instant to) {
     /*
      * if 'from' is null, fetch from the earliest representable time
-     *
-     * Annotation API query doesn't account for time zones. Deduct 1hr from "from" time so we don't
-     * miss any updates (TODO: make this configurable)
      */
 
-    String fromString = from != null ? toSolrDateString(from.minus(1, ChronoUnit.HOURS)) : "*";
+    String fromString = from != null ? toSolrDateString(from) : "*";
     String toString = toSolrDateString(to);
 
     return "generated:[" + fromString + " TO " + toString + "]";
@@ -185,17 +178,12 @@ public class AnnotationsApiRestService {
               .queryParam("page", page)
               .queryParam("limit", pageSize);
 
-      // Annotation API query doesn't account for time zones. Deduct 1hr from "from" time so we
-      // don't miss any updates (TODO: make this configurable)
-
       if (from != null) {
-        builder.queryParam(
-            "from",
-            ANNOTATION_QUERY_DATE_FORMAT.format(Date.from(from.minus(1, ChronoUnit.HOURS))));
+        builder.queryParam("from", from.atZone(ZoneOffset.UTC).format(deletedDateFormat));
       }
 
       if (to != null) {
-        builder.queryParam("to", ANNOTATION_QUERY_DATE_FORMAT.format(Date.from(to)));
+        builder.queryParam("to", to.atZone(ZoneOffset.UTC).format(deletedDateFormat));
       }
 
       return builder.build();
