@@ -4,6 +4,9 @@ import static dev.morphia.query.experimental.filters.Filters.eq;
 import static dev.morphia.query.experimental.filters.Filters.in;
 import static eu.europeana.fulltext.util.MorphiaUtils.Fields.*;
 import static eu.europeana.fulltextwrite.AppConstants.FULLTEXT_DATASTORE_BEAN;
+import static eu.europeana.fulltextwrite.util.FulltextWriteUtils.SET;
+import static eu.europeana.fulltextwrite.util.FulltextWriteUtils.SET_ON_INSERT;
+import static eu.europeana.fulltextwrite.util.FulltextWriteUtils.TRANSLATION_RESOURCE_COL;
 
 import com.mongodb.DBRef;
 import com.mongodb.bulk.BulkWriteResult;
@@ -20,6 +23,7 @@ import eu.europeana.fulltext.entity.TranslationAnnoPage;
 import eu.europeana.fulltext.entity.TranslationResource;
 import eu.europeana.fulltext.util.MorphiaUtils;
 import eu.europeana.fulltextwrite.AppConstants;
+import eu.europeana.fulltextwrite.exception.DatabaseQueryException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,8 +42,6 @@ public class AnnoPageRepository {
   // Indicates that an update query should be executed as an "upsert",
   // ie. creates new records if they do not already exist, or updates them if they do.
   public static final UpdateOptions UPSERT_OPTS = new UpdateOptions().upsert(true);
-
-  private static String TranslationAnnoPageCollection = TranslationResource.class.getSimpleName();
 
   public AnnoPageRepository(@Qualifier(FULLTEXT_DATASTORE_BEAN) Datastore datastore) {
     this.datastore = datastore;
@@ -158,7 +160,8 @@ public class AnnoPageRepository {
     return datastore.save(annoPage);
   }
 
-  public BulkWriteResult upsert(List<? extends TranslationAnnoPage> annoPageList) {
+  public BulkWriteResult upsert(List<? extends TranslationAnnoPage> annoPageList)
+      throws DatabaseQueryException {
     MongoCollection<TranslationAnnoPage> annoPageCollection =
         datastore.getMapper().getCollection(TranslationAnnoPage.class);
 
@@ -228,7 +231,14 @@ public class AnnoPageRepository {
   }
 
   private UpdateOneModel<TranslationAnnoPage> createAnnoPageUpdate(
-      Instant now, TranslationAnnoPage annoPage) {
+      Instant now, TranslationAnnoPage annoPage) throws DatabaseQueryException {
+
+    TranslationResource res = annoPage.getRes();
+
+    if (res == null) {
+      // all AnnoPages should have a resource
+      throw new DatabaseQueryException("res is null for " + annoPage);
+    }
 
     Document updateDoc =
         new Document(DATASET_ID, annoPage.getDsId())
@@ -256,12 +266,11 @@ public class AnnoPageRepository {
                 annoPage.getLang(),
                 PAGE_ID,
                 annoPage.getPgId())),
-        new Document("$set", updateDoc)
+        new Document(SET, updateDoc)
             // Only link resource for new documents. Resource ref should not change otherwise
             .append(
-                "$setOnInsert",
-                new Document(
-                    RESOURCE, new DBRef(TranslationAnnoPageCollection, annoPage.getRes().getId()))),
+                SET_ON_INSERT,
+                new Document(RESOURCE, new DBRef(TRANSLATION_RESOURCE_COL, res.getId()))),
         UPSERT_OPTS);
   }
 }

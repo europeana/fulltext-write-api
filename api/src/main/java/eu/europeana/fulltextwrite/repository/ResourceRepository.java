@@ -8,6 +8,8 @@ import static eu.europeana.fulltextwrite.AppConstants.FULLTEXT_DATASTORE_BEAN;
 import static eu.europeana.fulltextwrite.AppConstants.RIGHTS;
 import static eu.europeana.fulltextwrite.AppConstants.VALUE;
 import static eu.europeana.fulltextwrite.repository.AnnoPageRepository.UPSERT_OPTS;
+import static eu.europeana.fulltextwrite.util.FulltextWriteUtils.SET;
+import static eu.europeana.fulltextwrite.util.FulltextWriteUtils.SET_ON_INSERT;
 
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.UpdateOneModel;
@@ -16,6 +18,7 @@ import dev.morphia.Datastore;
 import eu.europeana.fulltext.entity.TranslationAnnoPage;
 import eu.europeana.fulltext.entity.TranslationResource;
 import eu.europeana.fulltext.util.MorphiaUtils;
+import eu.europeana.fulltextwrite.exception.DatabaseQueryException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -68,12 +71,14 @@ public class ResourceRepository {
     datastore.find(TranslationResource.class).delete(MorphiaUtils.MULTI_DELETE_OPTS);
   }
 
-  public BulkWriteResult upsertFromAnnoPage(List<? extends TranslationAnnoPage> annoPageList) {
+  public BulkWriteResult upsertFromAnnoPage(List<? extends TranslationAnnoPage> annoPageList)
+      throws DatabaseQueryException {
     List<WriteModel<TranslationResource>> resourceUpdates = new ArrayList<>();
     for (TranslationAnnoPage annoPage : annoPageList) {
       TranslationResource res = annoPage.getRes();
       if (res == null) {
-        continue;
+        // all AnnoPages should have a resource
+        throw new DatabaseQueryException("res is null for " + annoPage);
       }
 
       String id = new ObjectId().toString();
@@ -89,14 +94,14 @@ public class ResourceRepository {
                       DATASET_ID, res.getDsId(), LOCAL_ID, res.getLcId(), LANGUAGE, res.getLang())),
               // update doc
               new Document(
-                      "$set",
+                      SET,
                       new Document(DATASET_ID, res.getDsId())
                           .append(LOCAL_ID, res.getLcId())
                           .append(LANGUAGE, res.getLang())
                           .append(VALUE, res.getValue())
                           .append(RIGHTS, res.getRights()))
                   // only create _id for new records
-                  .append("$setOnInsert", new Document("_id", id)),
+                  .append(SET_ON_INSERT, new Document("_id", id)),
               UPSERT_OPTS));
     }
 

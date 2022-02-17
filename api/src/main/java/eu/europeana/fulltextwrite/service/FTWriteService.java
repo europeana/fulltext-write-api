@@ -9,6 +9,7 @@ import com.dotsub.converter.model.SubtitleItem;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.result.UpdateResult;
 import eu.europeana.fulltext.entity.TranslationAnnoPage;
+import eu.europeana.fulltextwrite.exception.DatabaseQueryException;
 import eu.europeana.fulltextwrite.exception.FTWriteConversionException;
 import eu.europeana.fulltextwrite.exception.InvalidFormatException;
 import eu.europeana.fulltextwrite.exception.SubtitleParsingException;
@@ -199,7 +200,8 @@ public class FTWriteService {
         getDsId(recordId), getLocalId(recordId), annotationPreview, fulltext);
   }
 
-  public void upsertAnnoPage(List<? extends TranslationAnnoPage> annoPageList) {
+  public void upsertAnnoPage(List<? extends TranslationAnnoPage> annoPageList)
+      throws DatabaseQueryException {
     BulkWriteResult resourceWriteResult = resourceRepository.upsertFromAnnoPage(annoPageList);
     if (logger.isDebugEnabled()) {
       logger.debug(

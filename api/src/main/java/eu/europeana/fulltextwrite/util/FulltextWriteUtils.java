@@ -3,6 +3,7 @@ package eu.europeana.fulltextwrite.util;
 import static eu.europeana.fulltextwrite.service.FTWriteService.ACTIVE_TEST_PROFILE;
 
 import eu.europeana.fulltext.entity.AnnoPage;
+import eu.europeana.fulltext.entity.TranslationResource;
 import eu.europeana.fulltextwrite.model.edm.Reference;
 import eu.europeana.fulltextwrite.model.edm.TextBoundary;
 import eu.europeana.fulltextwrite.model.edm.TimeBoundary;
@@ -19,6 +20,11 @@ public class FulltextWriteUtils {
   private FulltextWriteUtils() {
     // private constructor to hide implicit one
   }
+
+  public static final String TRANSLATION_RESOURCE_COL = TranslationResource.class.getSimpleName();
+
+  public static final String SET_ON_INSERT = "$setOnInsert";
+  public static final String SET = "$set";
 
   private static final Predicate<String> ANNOTATION_ID_PATTERN =
       Pattern.compile("https?://(.*)(\\.eanadev.org|europeana.eu)/annotation/\\d+")
