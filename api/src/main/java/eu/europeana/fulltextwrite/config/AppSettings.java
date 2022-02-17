@@ -1,16 +1,22 @@
 package eu.europeana.fulltextwrite.config;
 
+import static eu.europeana.fulltextwrite.util.FulltextWriteUtils.testProfileNotActive;
+
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.PropertySources;
+import org.springframework.util.StringUtils;
 
 @Configuration
 @PropertySources({
   @PropertySource("classpath:fulltext-write.properties"),
   @PropertySource(value = "classpath:fulltext-write.user.properties", ignoreResourceNotFound = true)
 })
-public class AppSettings {
+public class AppSettings implements InitializingBean {
 
   @Value("${auth.enabled}")
   private boolean authEnabled;
@@ -71,6 +77,9 @@ public class AppSettings {
 
   @Value("${batch.scheduling.annoSync.intervalSeconds}")
   private int annoSyncInterval;
+
+  @Value("${spring.profiles.active:}")
+  private String activeProfileString;
 
   public boolean isAuthEnabled() {
     return authEnabled;
@@ -150,5 +159,43 @@ public class AppSettings {
 
   public int getBatchSkipLimit() {
     return batchSkipLimit;
+  }
+
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    if (testProfileNotActive(activeProfileString)) {
+      validateRequiredSettings();
+    }
+  }
+
+  private void validateRequiredSettings() {
+    List<String> missingProps = new ArrayList<>();
+    // validate required settings
+    if (!StringUtils.hasLength(annotationsApiKey)) {
+      missingProps.add("annotations.wskey");
+    }
+
+    if (!StringUtils.hasLength(apiKeyPublicKey)) {
+      missingProps.add("europeana.apikey.jwttoken.signaturekey");
+    }
+
+    if (!StringUtils.hasLength(apiKeyUrl)) {
+      missingProps.add("europeana.apikey.serviceurl");
+    }
+
+    if (!StringUtils.hasLength(annotationsApiUrl)) {
+      missingProps.add("annotations.serviceurl");
+    }
+
+    if (!StringUtils.hasLength(fulltextApiUrl)) {
+      missingProps.add("fulltext.service.url");
+    }
+
+    if (!missingProps.isEmpty()) {
+      throw new IllegalStateException(
+          String.format(
+              "The following config properties are not set: %n %s",
+              String.join("%n", missingProps)));
+    }
   }
 }

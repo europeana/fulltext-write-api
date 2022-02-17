@@ -35,7 +35,7 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
   void saveAnnoPageShouldBeSuccessful() throws Exception {
     TranslationAnnoPage annoPage =
         mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
-    service.saveAnnoPage(annoPage);
+    service.upsertAnnoPage(List.of(annoPage));
     assertEquals(1, service.countAnnoPage());
     assertEquals(1, service.countResource());
   }
@@ -44,7 +44,7 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
   void annoPageRetrievalShouldBeSuccessful() throws Exception {
     TranslationAnnoPage annoPage =
         mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
-    service.saveAnnoPage(annoPage);
+    service.upsertAnnoPage(List.of(annoPage));
 
     TranslationAnnoPage retrievedAnnoPage =
         service.getAnnoPageByPgId("08604", "FDE2205EEE384218A8D986E5138F9691", "1", "nl");

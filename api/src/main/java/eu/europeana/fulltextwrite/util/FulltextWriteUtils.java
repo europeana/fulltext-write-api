@@ -1,10 +1,13 @@
 package eu.europeana.fulltextwrite.util;
 
+import static eu.europeana.fulltextwrite.service.FTWriteService.ACTIVE_TEST_PROFILE;
+
 import eu.europeana.fulltext.entity.AnnoPage;
 import eu.europeana.fulltextwrite.model.edm.Reference;
 import eu.europeana.fulltextwrite.model.edm.TextBoundary;
 import eu.europeana.fulltextwrite.model.edm.TimeBoundary;
 import eu.europeana.fulltextwrite.web.WebConstants;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -165,5 +168,9 @@ public class FulltextWriteUtils {
     // Should not be changed as this method can be used in place of fetching the pageId from the
     // database.
     return generateHash(mediaUrl).substring(0, 5);
+  }
+
+  public static boolean testProfileNotActive(String activeProfileString) {
+    return Arrays.stream(activeProfileString.split(",")).noneMatch(ACTIVE_TEST_PROFILE::equals);
   }
 }

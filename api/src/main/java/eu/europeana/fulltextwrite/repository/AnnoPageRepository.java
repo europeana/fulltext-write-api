@@ -5,6 +5,7 @@ import static dev.morphia.query.experimental.filters.Filters.in;
 import static eu.europeana.fulltext.util.MorphiaUtils.Fields.*;
 import static eu.europeana.fulltextwrite.AppConstants.FULLTEXT_DATASTORE_BEAN;
 
+import com.mongodb.DBRef;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.UpdateOneModel;
@@ -20,7 +21,10 @@ import eu.europeana.fulltext.entity.TranslationResource;
 import eu.europeana.fulltext.util.MorphiaUtils;
 import eu.europeana.fulltextwrite.AppConstants;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -34,6 +38,8 @@ public class AnnoPageRepository {
   // Indicates that an update query should be executed as an "upsert",
   // ie. creates new records if they do not already exist, or updates them if they do.
   public static final UpdateOptions UPSERT_OPTS = new UpdateOptions().upsert(true);
+
+  private static String TranslationAnnoPageCollection = TranslationResource.class.getSimpleName();
 
   public AnnoPageRepository(@Qualifier(FULLTEXT_DATASTORE_BEAN) Datastore datastore) {
     this.datastore = datastore;
@@ -223,6 +229,21 @@ public class AnnoPageRepository {
 
   private UpdateOneModel<TranslationAnnoPage> createAnnoPageUpdate(
       Instant now, TranslationAnnoPage annoPage) {
+
+    Document updateDoc =
+        new Document(DATASET_ID, annoPage.getDsId())
+            .append(LOCAL_ID, annoPage.getLcId())
+            .append(PAGE_ID, annoPage.getPgId())
+            .append(TARGET_ID, annoPage.getTgtId())
+            .append(ANNOTATIONS, annoPage.getAns())
+            .append(MODIFIED, now)
+            .append(LANGUAGE, annoPage.getLang());
+
+    // source isn't always set. Prevent null from being saved in db
+    if (annoPage.getSource() != null) {
+      updateDoc.append(SOURCE, annoPage.getSource());
+    }
+
     return new UpdateOneModel<>(
         new Document(
             // filter
@@ -235,18 +256,12 @@ public class AnnoPageRepository {
                 annoPage.getLang(),
                 PAGE_ID,
                 annoPage.getPgId())),
-        // update doc
-        new Document(
-            "$set",
-            new Document(DATASET_ID, annoPage.getDsId())
-                .append(LOCAL_ID, annoPage.getLcId())
-                .append(PAGE_ID, annoPage.getPgId())
-                .append(TARGET_ID, annoPage.getTgtId())
-                .append(ANNOTATIONS, annoPage.getAns())
-                .append(MODIFIED, now)
-                .append(LANGUAGE, annoPage.getLang())
-                .append(SOURCE, annoPage.getSource())
-                .append(RESOURCE, annoPage.getRes())),
+        new Document("$set", updateDoc)
+            // Only link resource for new documents. Resource ref should not change otherwise
+            .append(
+                "$setOnInsert",
+                new Document(
+                    RESOURCE, new DBRef(TranslationAnnoPageCollection, annoPage.getRes().getId()))),
         UPSERT_OPTS);
   }
 }
