@@ -42,9 +42,6 @@ public class FTWriteService {
 
   private static final Logger logger = LogManager.getLogger(FTWriteService.class);
 
-  /** Matches spring.profiles.active property in test/resource application.properties file */
-  public static final String ACTIVE_TEST_PROFILE = "test";
-
   public FTWriteService(
       AnnoPageRepository annotationRepository,
       ResourceRepository resourceRepository,

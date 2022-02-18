@@ -1,7 +1,5 @@
 package eu.europeana.fulltextwrite.util;
 
-import static eu.europeana.fulltextwrite.service.FTWriteService.ACTIVE_TEST_PROFILE;
-
 import eu.europeana.fulltext.entity.AnnoPage;
 import eu.europeana.fulltext.entity.TranslationResource;
 import eu.europeana.fulltextwrite.model.edm.Reference;
@@ -21,14 +19,13 @@ public class FulltextWriteUtils {
     // private constructor to hide implicit one
   }
 
+  /** Matches spring.profiles.active property in test/resource application.properties file */
+  public static final String ACTIVE_TEST_PROFILE = "test";
+
   public static final String TRANSLATION_RESOURCE_COL = TranslationResource.class.getSimpleName();
 
   public static final String SET_ON_INSERT = "$setOnInsert";
   public static final String SET = "$set";
-
-  private static final Predicate<String> ANNOTATION_ID_PATTERN =
-      Pattern.compile("https?://(.*)(\\.eanadev.org|europeana.eu)/annotation/\\d+")
-          .asMatchPredicate();
 
   /**
    * Regex used for validating annotation ids. '%s' will be replaced by allowed domains (via
