@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
+class FTWriteServiceIT extends BaseIntegrationTest {
 
   @Autowired FTWriteService service;
   @Autowired ObjectMapper mapper;
@@ -35,7 +35,7 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
   void saveAnnoPageShouldBeSuccessful() throws Exception {
     TranslationAnnoPage annoPage =
         mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
-    service.saveAnnoPage(annoPage);
+    service.upsertAnnoPage(List.of(annoPage));
     assertEquals(1, service.countAnnoPage());
     assertEquals(1, service.countResource());
   }
@@ -44,7 +44,7 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
   void annoPageRetrievalShouldBeSuccessful() throws Exception {
     TranslationAnnoPage annoPage =
         mapper.readValue(loadFile(ANNOPAGE_FILMPORTAL_1197365_JSON), TranslationAnnoPage.class);
-    service.saveAnnoPage(annoPage);
+    service.upsertAnnoPage(List.of(annoPage));
 
     TranslationAnnoPage retrievedAnnoPage =
         service.getAnnoPageByPgId("08604", "FDE2205EEE384218A8D986E5138F9691", "1", "nl");
@@ -135,7 +135,7 @@ class FTWriteAnnotationServiceIT extends BaseIntegrationTest {
     TranslationAnnoPage updatedAnnopage = service.updateAnnoPage(preview, annoPage);
 
     // check
-    assertEquals(updatedAnnopage.getSource(), "https://annotation/source/value");
+    assertEquals("https://annotation/source/value", updatedAnnopage.getSource());
     assertEquals(rights, updatedAnnopage.getRes().getRights());
     assertEquals(annoPage.getAns().size(), updatedAnnopage.getAns().size());
     assertEquals(annoPage.getLang(), updatedAnnopage.getLang());

@@ -1,10 +1,12 @@
 package eu.europeana.fulltextwrite.util;
 
 import eu.europeana.fulltext.entity.AnnoPage;
+import eu.europeana.fulltext.entity.TranslationResource;
 import eu.europeana.fulltextwrite.model.edm.Reference;
 import eu.europeana.fulltextwrite.model.edm.TextBoundary;
 import eu.europeana.fulltextwrite.model.edm.TimeBoundary;
 import eu.europeana.fulltextwrite.web.WebConstants;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -17,9 +19,13 @@ public class FulltextWriteUtils {
     // private constructor to hide implicit one
   }
 
-  private static final Predicate<String> ANNOTATION_ID_PATTERN =
-      Pattern.compile("https?://(.*)(\\.eanadev.org|europeana.eu)/annotation/\\d+")
-          .asMatchPredicate();
+  /** Matches spring.profiles.active property in test/resource application.properties file */
+  public static final String ACTIVE_TEST_PROFILE = "test";
+
+  public static final String TRANSLATION_RESOURCE_COL = TranslationResource.class.getSimpleName();
+
+  public static final String SET_ON_INSERT = "$setOnInsert";
+  public static final String SET = "$set";
 
   /**
    * Regex used for validating annotation ids. '%s' will be replaced by allowed domains (via
@@ -165,5 +171,9 @@ public class FulltextWriteUtils {
     // Should not be changed as this method can be used in place of fetching the pageId from the
     // database.
     return generateHash(mediaUrl).substring(0, 5);
+  }
+
+  public static boolean testProfileNotActive(String activeProfileString) {
+    return Arrays.stream(activeProfileString.split(",")).noneMatch(ACTIVE_TEST_PROFILE::equals);
   }
 }

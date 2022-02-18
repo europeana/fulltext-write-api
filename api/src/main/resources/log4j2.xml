@@ -22,5 +22,9 @@
 
         <!-- Log netty requests and responses. Requires Wiretap to be enabled on WebClient  -->
         <!-- <Logger name="reactor.netty.http.client.HttpClient" level="TRACE"/>-->
+
+        <!-- Log Mongo queries  -->
+        <!-- <logger name="org.mongodb.driver.protocol.command" level="DEBUG"/>-->
+
     </Loggers>
 </Configuration>

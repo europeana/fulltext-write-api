@@ -4,7 +4,11 @@ import static dev.morphia.query.experimental.filters.Filters.eq;
 import static dev.morphia.query.experimental.filters.Filters.in;
 import static eu.europeana.fulltext.util.MorphiaUtils.Fields.*;
 import static eu.europeana.fulltextwrite.AppConstants.FULLTEXT_DATASTORE_BEAN;
+import static eu.europeana.fulltextwrite.util.FulltextWriteUtils.SET;
+import static eu.europeana.fulltextwrite.util.FulltextWriteUtils.SET_ON_INSERT;
+import static eu.europeana.fulltextwrite.util.FulltextWriteUtils.TRANSLATION_RESOURCE_COL;
 
+import com.mongodb.DBRef;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.UpdateOneModel;
@@ -19,8 +23,12 @@ import eu.europeana.fulltext.entity.TranslationAnnoPage;
 import eu.europeana.fulltext.entity.TranslationResource;
 import eu.europeana.fulltext.util.MorphiaUtils;
 import eu.europeana.fulltextwrite.AppConstants;
+import eu.europeana.fulltextwrite.exception.DatabaseQueryException;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -152,7 +160,8 @@ public class AnnoPageRepository {
     return datastore.save(annoPage);
   }
 
-  public BulkWriteResult upsert(List<? extends TranslationAnnoPage> annoPageList) {
+  public BulkWriteResult upsert(List<? extends TranslationAnnoPage> annoPageList)
+      throws DatabaseQueryException {
     MongoCollection<TranslationAnnoPage> annoPageCollection =
         datastore.getMapper().getCollection(TranslationAnnoPage.class);
 
@@ -222,7 +231,29 @@ public class AnnoPageRepository {
   }
 
   private UpdateOneModel<TranslationAnnoPage> createAnnoPageUpdate(
-      Instant now, TranslationAnnoPage annoPage) {
+      Instant now, TranslationAnnoPage annoPage) throws DatabaseQueryException {
+
+    TranslationResource res = annoPage.getRes();
+
+    if (res == null) {
+      // all AnnoPages should have a resource
+      throw new DatabaseQueryException("res is null for " + annoPage);
+    }
+
+    Document updateDoc =
+        new Document(DATASET_ID, annoPage.getDsId())
+            .append(LOCAL_ID, annoPage.getLcId())
+            .append(PAGE_ID, annoPage.getPgId())
+            .append(TARGET_ID, annoPage.getTgtId())
+            .append(ANNOTATIONS, annoPage.getAns())
+            .append(MODIFIED, now)
+            .append(LANGUAGE, annoPage.getLang());
+
+    // source isn't always set. Prevent null from being saved in db
+    if (annoPage.getSource() != null) {
+      updateDoc.append(SOURCE, annoPage.getSource());
+    }
+
     return new UpdateOneModel<>(
         new Document(
             // filter
@@ -235,18 +266,11 @@ public class AnnoPageRepository {
                 annoPage.getLang(),
                 PAGE_ID,
                 annoPage.getPgId())),
-        // update doc
-        new Document(
-            "$set",
-            new Document(DATASET_ID, annoPage.getDsId())
-                .append(LOCAL_ID, annoPage.getLcId())
-                .append(PAGE_ID, annoPage.getPgId())
-                .append(TARGET_ID, annoPage.getTgtId())
-                .append(ANNOTATIONS, annoPage.getAns())
-                .append(MODIFIED, now)
-                .append(LANGUAGE, annoPage.getLang())
-                .append(SOURCE, annoPage.getSource())
-                .append(RESOURCE, annoPage.getRes())),
+        new Document(SET, updateDoc)
+            // Only link resource for new documents. Resource ref should not change otherwise
+            .append(
+                SET_ON_INSERT,
+                new Document(RESOURCE, new DBRef(TRANSLATION_RESOURCE_COL, res.getId()))),
         UPSERT_OPTS);
   }
 }

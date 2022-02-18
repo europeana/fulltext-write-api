@@ -3,12 +3,13 @@ package eu.europeana.fulltextwrite.service;
 import static eu.europeana.fulltextwrite.util.FulltextWriteUtils.getAnnoPageToString;
 import static eu.europeana.fulltextwrite.util.FulltextWriteUtils.getDsId;
 import static eu.europeana.fulltextwrite.util.FulltextWriteUtils.getLocalId;
+import static eu.europeana.fulltextwrite.util.FulltextWriteUtils.testProfileNotActive;
 
 import com.dotsub.converter.model.SubtitleItem;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.result.UpdateResult;
 import eu.europeana.fulltext.entity.TranslationAnnoPage;
-import eu.europeana.fulltext.entity.TranslationResource;
+import eu.europeana.fulltextwrite.exception.DatabaseQueryException;
 import eu.europeana.fulltextwrite.exception.FTWriteConversionException;
 import eu.europeana.fulltextwrite.exception.InvalidFormatException;
 import eu.europeana.fulltextwrite.exception.SubtitleParsingException;
@@ -22,10 +23,7 @@ import eu.europeana.fulltextwrite.util.EDMToFulltextConverter;
 import eu.europeana.fulltextwrite.util.FulltextWriteUtils;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,9 +41,6 @@ public class FTWriteService {
   private final SubtitleHandlerService subtitleHandlerService;
 
   private static final Logger logger = LogManager.getLogger(FTWriteService.class);
-
-  /** Matches spring.profiles.active property in test/resource application.properties file */
-  public static final String ACTIVE_TEST_PROFILE = "test";
 
   public FTWriteService(
       AnnoPageRepository annotationRepository,
@@ -202,11 +197,9 @@ public class FTWriteService {
         getDsId(recordId), getLocalId(recordId), annotationPreview, fulltext);
   }
 
-  public void upsertAnnoPage(List<? extends TranslationAnnoPage> annoPageList) {
-    Stream<TranslationResource> translationResourceStream =
-        annoPageList.stream().filter(Objects::nonNull).map(TranslationAnnoPage::getRes);
-
-    BulkWriteResult resourceWriteResult = resourceRepository.upsert(translationResourceStream);
+  public void upsertAnnoPage(List<? extends TranslationAnnoPage> annoPageList)
+      throws DatabaseQueryException {
+    BulkWriteResult resourceWriteResult = resourceRepository.upsertFromAnnoPage(annoPageList);
     if (logger.isDebugEnabled()) {
       logger.debug(
           "Saved resources to db: matched={}, modified={}, inserted={}",
@@ -249,7 +242,7 @@ public class FTWriteService {
    * invoked from tests
    */
   public void dropCollections() {
-    if (Arrays.stream(activeProfileString.split(",")).noneMatch(ACTIVE_TEST_PROFILE::equals)) {
+    if (testProfileNotActive(activeProfileString)) {
       throw new IllegalStateException(
           String.format(
               "Attempting to drop collections outside testing. activeProfiles=%s",
