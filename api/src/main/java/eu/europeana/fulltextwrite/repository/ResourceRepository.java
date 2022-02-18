@@ -81,11 +81,6 @@ public class ResourceRepository {
         throw new DatabaseQueryException("res is null for " + annoPage);
       }
 
-      String id = new ObjectId().toString();
-
-      // set resId on AnnoPage, so they can be linked. Only used for new records
-      res.setId(id);
-
       resourceUpdates.add(
           new UpdateOneModel<>(
               new Document(
@@ -101,7 +96,7 @@ public class ResourceRepository {
                           .append(VALUE, res.getValue())
                           .append(RIGHTS, res.getRights()))
                   // only create _id for new records
-                  .append(SET_ON_INSERT, new Document("_id", id)),
+                  .append(SET_ON_INSERT, new Document("_id", res.getId())),
               UPSERT_OPTS));
     }
 
