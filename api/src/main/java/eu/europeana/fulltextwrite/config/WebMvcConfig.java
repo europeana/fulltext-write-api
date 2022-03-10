@@ -1,6 +1,7 @@
 package eu.europeana.fulltextwrite.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -19,6 +20,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         .allowedMethods("*")
         .allowedHeaders("*")
         .allowCredentials(false)
+        .exposedHeaders(HttpHeaders.ALLOW)
         .maxAge(1000L); // in seconds
   }
 
