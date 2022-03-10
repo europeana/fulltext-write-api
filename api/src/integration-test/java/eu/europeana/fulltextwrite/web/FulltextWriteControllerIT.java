@@ -145,4 +145,40 @@ class FulltextWriteControllerIT extends BaseIntegrationTest {
                 .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isNotFound());
   }
+
+  @Test
+  void submissionWithMissingRequestBodyShouldReturn400() throws Exception {
+    mockMvc
+        .perform(
+            post("/presentation/08604/FDE2205EEE384218A8D986E5138F9691/annopage")
+                .param(WebConstants.REQUEST_VALUE_MEDIA, "https://www.filmportal.de/node/1197365")
+                .param(WebConstants.REQUEST_VALUE_LANG, "nl")
+                .param(
+                    WebConstants.REQUEST_VALUE_RIGHTS,
+                    "http://creativecommons.org/licenses/by-sa/4.0/")
+                .accept(MediaType.APPLICATION_JSON)
+            // no contentType
+            )
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void submissionWithInvalidRequestParamShouldReturn400() throws Exception {
+    String requestBody = IntegrationTestUtils.loadFile(SUBTITLE_VTT);
+
+    mockMvc
+        .perform(
+            post("/presentation/08604/FDE2205EEE384218A8D986E5138F9691/annopage")
+                .param(WebConstants.REQUEST_VALUE_MEDIA, "https://www.filmportal.de/node/1197365")
+                .param(WebConstants.REQUEST_VALUE_LANG, "nl")
+                // originalLang is boolean
+                .param(WebConstants.REQUEST_VALUE_ORIGINAL_LANG, "nl")
+                .param(
+                    WebConstants.REQUEST_VALUE_RIGHTS,
+                    "http://creativecommons.org/licenses/by-sa/4.0/")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(CONTENT_TYPE_VTT)
+                .content(requestBody))
+        .andExpect(status().isBadRequest());
+  }
 }
